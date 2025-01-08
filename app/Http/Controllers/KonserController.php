@@ -79,10 +79,23 @@ class KonserController extends Controller
         }
     }
 
-    public function store(KonserRequest $request)
+    public function store(Request $request)
 {
     // Validasi input
-    $req = $request->validated();
+    $req = $request->validate([
+        'title' => 'required|string|max:255',
+        'tanggal' => 'required|date',
+        'jam' => 'required',
+        'lokasi' => 'required|string|max:255',
+        'tiket_tersedia' => 'required|integer|min:0',
+        'kontak' => 'nullable|string|max:255',
+        'deskripsi' => 'required|string',
+        'harga' => 'required|numeric|min:0',
+        'nama_sosmed' => 'required|string|max:255',
+        'image' => 'required|file|mimes:jpg,png,jpeg|max:2048',
+        'vip' => 'required',
+        'reguler' => 'required',
+    ]);
 
     // Jika ada file gambar
     if ($request->hasFile('image')) {
@@ -90,9 +103,6 @@ class KonserController extends Controller
     }
 
     // Gunakan transaksi untuk menyimpan data
-    try {
-        DB::beginTransaction();
-
         // Simpan data ke tabel `konser`
         $konser = Konser::create([
             'title' => $req['title'],
@@ -109,15 +119,10 @@ class KonserController extends Controller
 
         // Simpan data ke tabel `tiket`
         $tiket = Tiket::create([
-            'konser_id' => $konser->id, // Hubungkan dengan konser ID
-            'user_id' => auth()->id(), // Ambil user yang login
+            'konsers_id' => $konser->id, // Hubungkan dengan konser ID
             'vip' => $req['vip'] ?? 0, // Default jika tidak ada
             'reguler' => $req['reguler'] ?? 0,
-            'opengate' => $req['opengate'] ?? '00:00',
-            'closegate' => $req['closegate'] ?? '23:59',
         ]);
-
-        DB::commit();
 
         return response()->json([
             'success' => true,
@@ -127,15 +132,6 @@ class KonserController extends Controller
                 'tiket' => $tiket,
             ]
         ]);
-    } catch (\Exception $e) {
-        DB::rollBack();
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Gagal menyimpan data',
-            'error' => $e->getMessage()
-        ], 500);
-    }
 }
 
 

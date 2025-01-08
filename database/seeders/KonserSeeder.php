@@ -99,6 +99,17 @@ class KonserSeeder extends Seeder
                 // 'kontak' => '086723467236',
                 'deskripsi' => 'Konser musik terbesar di Jakarta.',
             ]);
+            // Konser::create([
+            //     'title' => 'Artic Monkey',
+            //     'tanggal' => '2024-12-14',
+            //     'lokasi' => 'SURABAYA',
+            //     'harga' => '50000',
+            //     'jam' => '20.00',
+            //     'tiket_tersedia' => '150',
+            //     'image' => '/media/musik/cas.png',
+            //     'kontak' => '086723467236',
+            //     'deskripsi' => 'Konser musik terbesar di Jakarta.',
+            // ]);
             
     }
 }

@@ -22,7 +22,7 @@ const columns = [
     column.accessor("konsers.title", {
         header: "Title",
     }),
-    column.accessor("harga", {
+    column.accessor("konsers.harga", {
         header: "Harga Tiket",
         cell: cell => currency(cell.getValue())
     }),

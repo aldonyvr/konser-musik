@@ -53,10 +53,9 @@ function submit() {
     if (image.value.length) {
         konserFormData.append("image", image.value[0].file);
     }
-
-    const tiketFormData = new FormData();
-    tiketFormData.append("vip", user.value.vip);
-    tiketFormData.append("reguler", user.value.reguler);
+    
+    konserFormData.append("vip", user.value.vip);
+    konserFormData.append("reguler", user.value.reguler);
 
     block(document.getElementById("form-user"));
 
@@ -71,9 +70,8 @@ function submit() {
                 "Content-Type": "multipart/form-data",
             },
         }),
-        axios.post("/tiket/store", tiketFormData),
     ])
-        .then(([konserResponse, tiketResponse]) => {
+        .then((konserResponse) => {
             emit("close");
             emit("refresh");
             toast.success("Data konser dan tiket berhasil disimpan");

@@ -41,7 +41,7 @@ const routes: Array<RouteRecordRaw> = [
         },
     },
     {
-        path: "/detail-konser/:id",
+        path: "/detail-konser/:uuid",
         name: "detail-konser",
         component: () => import("@/landing/detail-konser.vue"),
         meta: {
@@ -161,6 +161,15 @@ const routes: Array<RouteRecordRaw> = [
                 component: () => import("@/pages/auth/sign-in/Index.vue"),
                 meta: {
                     pageTitle: "Sign In",
+                    middleware: "guest",
+                },
+            },
+            {
+                path: "/sign-up",
+                name: "sign-up",
+                component: () => import("@/pages/auth/sign-up/Index.vue"),
+                meta: {
+                    pageTitle: "Sign Up",
                     middleware: "guest",
                 },
             },

@@ -1,7 +1,5 @@
 <template>
-    <!--begin::Form-->
     <div class="w-100">
-        <!--begin::Heading-->
         <div class="text-center mb-10">
             <router-link to="/">
                 <img
@@ -10,13 +8,10 @@
                     class="w-200px mb-4"
                 />
             </router-link>
-            <!--begin::Title-->
             <h2 class="">
                 Masuk ke <span class="text-primary">{{ setting?.app }}</span>
             </h2>
-            <!--end::Title-->
         </div>
-        <!--begin::Heading-->
 
         <ul class="nav nav-tabs nav-line-tabs mb-3 fs-6">
             <li class="nav-item">
@@ -45,13 +40,13 @@
         <div class=" border-gray-300 w-100 mt-5 mb-10"></div>
 
         <!--begin::Link-->
-        <!-- <div class="text-gray-400 fw-semobold fs-4 text-center">
-            {{ $t('login.daftar_label') }}
+        <div class="text-gray-500 fw-semobold fs-4 text-center">
+            Belum memiliki akun?
 
-            <router-link to="/auth/sign-up" class="link-primary fw-bold">
-                {{ $t('login.daftar') }}
+            <router-link to="/sign-up" class="link-primary fw-bold">
+                REGISTER 
             </router-link>
-        </div> -->
+        </div>
         <!--end::Link-->
     </div>
     <!--end::Form-->

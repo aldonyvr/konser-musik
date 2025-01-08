@@ -6,7 +6,11 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\KonserController;
 use App\Http\Controllers\TiketController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\registerController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -19,9 +23,15 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('/cek-sesi-laravel', function () {
+    $auth = Auth::check();
+    return response()->json($auth);
+});
+
 // Authentication Route
 Route::middleware(['auth', 'json'])->prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login'])->withoutMiddleware('auth');
+    Route::post('register', [AuthController::class, 'register'])->withoutMiddleware('auth');
     Route::delete('logout', [AuthController::class, 'logout']);
     Route::get('me', [AuthController::class, 'me']);
 });
@@ -57,7 +67,7 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         Route::get('', [KonserController::class, 'get'])->withoutMiddleware(['auth', 'verified']);
         Route::post('', [KonserController::class, 'index']);
         Route::post('show', [KonserController::class, 'show']);
-        Route::get('edit/{uuid}', [KonserController::class, 'edit']);
+        Route::get('edit/{uuid}', [KonserController::class, 'edit'])->withoutMiddleware(['auth', 'verified']);
         Route::post('update/{uuid}', [KonserController::class, 'update']);
         Route::post('store', [KonserController::class, 'store']);
         Route::get('cities', [KonserController::class, 'getCities'])->withoutMiddleware(['auth', 'verified']);;
@@ -70,6 +80,21 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         Route::post('store', [TiketController::class, 'store']);
         Route::post('update', [TiketController::class, 'update']);
         Route::apiResource('tiket', TiketController::class)
+            ->except(['index', 'store']);
+    });
+
+    Route::prefix('order')->group(function () {
+        Route::resource('orders', OrderController::class)->only(['index', 'show']);
+    });
+
+    Route::prefix('register')->group(function () {
+        Route::post('get', [RegisterController::class, 'get']);
+        Route::post('', [RegisterController::class, 'index']);
+        Route::post('show', [RegisterController::class, 'show']);
+        Route::get('edit/{uuid}', [RegisterController::class, 'edit'])->withoutMiddleware(['auth', 'verified']);
+        Route::post('update/{uuid}', [RegisterController::class, 'update']);
+        Route::post('store', [RegisterController::class, 'store'])->withoutMiddleware(['auth', 'verified']);
+        Route::apiResource('register', RegisterController::class)
             ->except(['index', 'store']);
     });
 });
