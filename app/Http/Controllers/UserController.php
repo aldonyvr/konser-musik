@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Http\Requests\StoreUserRequest;
-use App\Http\Requests\UpdateUserRequest;
 use App\Models\Role;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\StoreUserRequest;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\UpdateUserRequest;
+use Illuminate\Database\Eloquent\Builder;
 
 class UserController extends Controller
 {
@@ -23,6 +26,30 @@ class UserController extends Controller
             'data' => User::when($request->role_id, function (Builder $query, string $role_id) {
                 $query->role($role_id);
             })->get()
+        ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'password' => 'required|min:8|confirmed',
+            'password_confirmation' => 'required|same:password',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $user = $request->user();
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Password berhasil diubah.'
         ]);
     }
 
@@ -65,6 +92,7 @@ class UserController extends Controller
             'user' => $user
         ]);
     }
+
 
     /**
      * Display the specified resource.

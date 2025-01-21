@@ -24,6 +24,8 @@ class TiketRequest extends FormRequest
         return [
             // 'users_id' => '',
             'konsers_id' => '',
+            'harga_vip' => '',
+            'harga_regular' => '',
             'reguler' => '',
             'vip' => '',
             'opengate' => '',

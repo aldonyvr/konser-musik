@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Tiket;
+use App\Models\Lokasi;
 use App\Models\JenisTiket;
 use App\Traits\Uuid;
 
@@ -18,7 +19,6 @@ class Konser extends Model
         'jam',
         'nama_sosmed',
         'lokasi',
-        'harga',
         'tiket_tersedia',
         'image',
         'deskripsi',
@@ -27,5 +27,8 @@ class Konser extends Model
 
     public function tiket () {
         return $this->hasMany(Tiket::class);
+    }
+    public function lokasi () {
+        return $this->hasMany(Lokasi::class);
     }
 };

@@ -28,10 +28,10 @@ const columns = [
     column.accessor("tiket_tersedia", {
         header: "Total Tiket Tersedia",
     }),
-    column.accessor("harga", {
-        header: "Harga",
-        cell: cell => currency(cell.getValue())
-    }),
+    // column.accessor("harga", {
+    //     header: "Harga",
+    //     cell: cell => currency(cell.getValue())
+    // }),
     column.accessor("tanggal", {
         header: "Tanggal",
     }),
@@ -42,9 +42,9 @@ const columns = [
         header: "Image",
         cell: cell => h('img', {src: `${cell.getValue()}`, width: 150 })
     }),
-    column.accessor("deskripsi", {
-        header: "Deskripsi",
-    }),
+    // column.accessor("deskripsi", {
+    //     header: "Deskripsi",
+    // }),
 
 
     column.accessor("uuid", {
@@ -112,7 +112,7 @@ watch(openForm, (val) => {
             <paginate
                 ref="paginateRef"
                 id="table-users"
-                url="/konser"
+                url="/konser/index"
                 :columns="columns"
             ></paginate>
         </div>

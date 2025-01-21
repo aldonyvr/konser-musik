@@ -20,9 +20,8 @@ return new class extends Migration
             $table->date('tanggal');
             $table->string('lokasi');
             $table->string('jam')->nullable();
-            $table->integer('kontak')->nullable();
-            $table->string('harga');
-            $table->string('tiket_tersedia')->nullable();
+            $table->string('kontak')->nullable(); // Changed from number to stringrcont
+            $table->integer('tiket_tersedia')->nullable(); // Changed to integer
             $table->string('nama_sosmed')->nullable();
             $table->string('image')->nullable();
             $table->text('deskripsi')->nullable();

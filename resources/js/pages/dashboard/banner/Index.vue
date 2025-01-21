@@ -3,9 +3,10 @@ import { h, ref, watch } from "vue";
 import { useDelete } from "@/libs/hooks";
 import Form from "./Form.vue";
 import { createColumnHelper } from "@tanstack/vue-table";
-import type { User } from "@/types";
+import type { Konser } from "@/types";
+import { currency } from '@/libs/utils';
 
-const column = createColumnHelper<User>();
+const column = createColumnHelper<Konser>();
 const paginateRef = ref<any>(null);
 const selected = ref<string>("");
 const openForm = ref<boolean>(false);
@@ -16,18 +17,15 @@ const { delete: deleteUser } = useDelete({
 
 const columns = [
     column.accessor("no", {
-        header: "#",
+        header: "No",
     }),
-    column.accessor("name", {
-        header: "Nama",
+    column.accessor("image", {
+        header: "Banner Konser",
+        cell: cell => h('img', {src: `${cell.getValue()}`, width: 150 })
     }),
-    column.accessor("email", {
-        header: "Email",
-    }),
-    column.accessor("phone", {
-        header: "No. Telp",
-    }),
+
     column.accessor("uuid", {
+
         header: "Aksi",
         cell: (cell) =>
             h("div", { class: "d-flex gap-2" }, [
@@ -47,7 +45,7 @@ const columns = [
                     {
                         class: "btn btn-sm btn-icon btn-danger",
                         onClick: () =>
-                            deleteUser(`/master/users/${cell.getValue()}`),
+                            deleteUser(`banner/konser/${cell.getValue()}`),
                     },
                     h("i", { class: "la la-trash fs-2" })
                 ),
@@ -72,17 +70,16 @@ watch(openForm, (val) => {
         v-if="openForm"
         @refresh="refresh"
     />
-
     <div class="card">
         <div class="card-header align-items-center">
-            <h2 class="mb-0">List Users</h2>
+            <h2 class="mb-0"></h2>
             <button
                 type="button"
                 class="btn btn-sm btn-primary ms-auto"
                 v-if="!openForm"
                 @click="openForm = true"
             >
-                Tambah
+                Tambah Banner
                 <i class="la la-plus"></i>
             </button>
         </div>
@@ -90,10 +87,9 @@ watch(openForm, (val) => {
             <paginate
                 ref="paginateRef"
                 id="table-users"
-                url="/master/users"
+                url="/banner"
                 :columns="columns"
             ></paginate>
         </div>
     </div>
 </template>
-    

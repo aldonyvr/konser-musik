@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             SettingSeeder::class,
             KonserSeeder::class,
+            BannerSeeder::class,
+            TiketSeeder::class,
         ]);
     }
 }

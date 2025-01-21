@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\KonserRequest;
 use App\Models\Konser;
+use App\Models\Lokasi;
 use App\Models\Tiket;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,11 +26,10 @@ class KonserController extends Controller
         $page = $request->page ? $request->page - 1 : 0;
         $query = Konser::query();
 
-        // Pencarian berdasarkan nama atau lokasi
         if ($request->search) {
             $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('full_name', 'like', "%{$request->search}%")
+                $q->where('title', 'like', "%{$request->search}%")
+                  ->orWhere('deskripsi', 'like', "%{$request->search}%")
                   ->orWhere('lokasi', 'like', "%{$request->search}%");
             });
         }
@@ -68,7 +68,7 @@ class KonserController extends Controller
         $konser = Konser::findByUuid($uuid);
         if ($konser) {
             $konser->delete();
-            return response()->json([
+            return response()->json([   
                 'message' => "Data successfully deleted",
                 'code' => 200
             ]);
@@ -90,16 +90,13 @@ class KonserController extends Controller
         'tiket_tersedia' => 'required|integer|min:0',
         'kontak' => 'nullable|string|max:255',
         'deskripsi' => 'required|string',
-        'harga' => 'required|numeric|min:0',
         'nama_sosmed' => 'required|string|max:255',
         'image' => 'required|file|mimes:jpg,png,jpeg|max:2048',
-        'vip' => 'required',
-        'reguler' => 'required',
     ]);
 
     // Jika ada file gambar
     if ($request->hasFile('image')) {
-        $req['image'] = $request->file('image')->store('konser', 'public');
+        $req['image'] = $request->file('image')->store('media', 'public');
     }
 
     // Gunakan transaksi untuk menyimpan data
@@ -112,17 +109,20 @@ class KonserController extends Controller
             'tiket_tersedia' => $req['tiket_tersedia'],
             'kontak' => $req['kontak'] ?? null,
             'deskripsi' => $req['deskripsi'],
-            'harga' => $req['harga'],
             'nama_sosmed' => $req['nama_sosmed'],
-            'image' => $req['image']
+            'image' => "/storage/".$req['image']
         ]);
 
         // Simpan data ke tabel `tiket`
         $tiket = Tiket::create([
             'konsers_id' => $konser->id, // Hubungkan dengan konser ID
-            'vip' => $req['vip'] ?? 0, // Default jika tidak ada
-            'reguler' => $req['reguler'] ?? 0,
+            'tiket_tersedia' => $req['tiket_tersedia'] ?? 0, // Default jika tidak ada
         ]);
+
+        // $lokasi = Lokasi::create([
+        //     'konser_id' => $konser->id,
+        //     'lokasi' => $req['lokasi']
+        // ]);
 
         return response()->json([
             'success' => true,

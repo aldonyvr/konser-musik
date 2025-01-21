@@ -1,5 +1,130 @@
 <script setup lang="ts">
+import VueApexCharts from "vue3-apexcharts";
+import { ref, onMounted } from 'vue';
 
+const ticketSalesOptions = ref({
+  chart: {
+    type: 'line',
+    height: 350,
+    toolbar: {
+      show: true
+    },
+    zoom: {
+      enabled: true
+    }
+  },
+  colors: ['#4e73df', '#1cc88a'],
+  series: [{
+    name: 'Jumlah Tiket',
+    data: [450, 520, 640, 720, 850, 780]
+  }, {
+    name: 'Pendapatan (Juta Rp)',
+    data: [22.5, 26, 32, 36, 42.5, 39]
+  }],
+  xaxis: {
+    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    title: {
+      text: 'Bulan'
+    }
+  },
+  yaxis: [
+    {
+      title: {
+        text: "Jumlah Tiket"
+      }
+    },
+    {
+      opposite: true,
+      title: {
+        text: "Pendapatan (Juta Rp)"
+      }
+    }
+  ],
+  title: {
+    text: 'Trend Penjualan Tiket',
+    align: 'center'
+  },
+  stroke: {
+    curve: 'smooth',
+    width: 2
+  },
+  legend: {
+    position: 'bottom'
+  }
+});
+
+// Chart options for Concert Categories
+const concertCategoriesOptions = ref({
+  chart: {
+    type: 'bar',
+    height: 350,
+    toolbar: {
+      show: true
+    }
+  },
+  colors: ['#4e73df'],
+  series: [{
+    name: 'Jumlah Konser',
+    data: [12, 8, 5, 4, 3]
+  }],
+  xaxis: {
+    categories: ['Pop', 'Rock', 'Jazz', 'Classical', 'Others'],
+    title: {
+      text: 'Kategori'
+    }
+  },
+  yaxis: {
+    title: {
+      text: 'Jumlah Konser'
+    }
+  },
+  title: {
+    text: 'Distribusi Kategori Konser',
+    align: 'center'
+  },
+  plotOptions: {
+    bar: {
+      borderRadius: 4,
+      horizontal: false,
+      columnWidth: '55%',
+    }
+  },
+  dataLabels: {
+    enabled: false
+  },
+  legend: {
+    position: 'bottom'
+  }
+});
+
+// Chart options for Monthly Revenue Distribution
+const revenueDistributionOptions = ref({
+  chart: {
+    type: 'donut',
+    height: 350
+  },
+  colors: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
+  series: [44, 55, 32, 14],
+  labels: ['Regular', 'VIP', 'VVIP', 'Others'],
+  title: {
+    text: 'Distribusi Pendapatan per Kategori Tiket',
+    align: 'center'
+  },
+  legend: {
+    position: 'bottom'
+  },
+  responsive: [{
+    breakpoint: 480,
+    options: {
+      chart: {
+        width: 200
+      },
+      legend: {
+        position: 'bottom'
+      }
+    }
+  }]
+});
 </script>
 
 <template>
@@ -149,7 +274,43 @@
               </div>
               <!--end::Items-->
             </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Ticket Sales Trend Chart -->
+      <div class="card">
+        <div class="card-body">
+          <apexchart
+            type="line"
+            height="350"
+            :options="ticketSalesOptions"
+            :series="ticketSalesOptions.series"
+          ></apexchart>
+        </div>
+      </div>
 
+      <!-- Concert Categories Chart -->
+      <div class="card">
+        <div class="card-body">
+          <apexchart
+            type="bar"
+            height="350"
+            :options="concertCategoriesOptions"
+            :series="concertCategoriesOptions.series"
+          ></apexchart>
+        </div>
+      </div>
+
+      <!-- Revenue Distribution Chart -->
+      <div class="card">
+        <div class="card-body">
+          <apexchart
+            type="donut"
+            height="350"
+            :options="revenueDistributionOptions"
+            :series="revenueDistributionOptions.series"
+          ></apexchart>
+        </div>
+      </div>
+    </div>
             </div>  
             </div>
             </div>  

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="flex justify-content-end items-end fixed bottom-0">
     <div class=" bg-dark">
       <footer class="footer">
         <div class="footer-content">

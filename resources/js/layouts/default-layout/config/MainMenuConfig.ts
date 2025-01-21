@@ -38,10 +38,22 @@ const MainMenuConfig: Array<MenuItem> = [
                 keenthemesIcon: "tag",
             },
             {
+                heading: "Data Riwayat Transaksi",
+                route: "/dashboard/riwayattransaksi",
+                name: "riwayattransaksi",
+                keenthemesIcon: "directbox-default",
+            },
+            {
                 heading: "Laporan & Analitic",
                 route: "/dashboard/laporananalitic",
                 name: "laporananalitic",
                 keenthemesIcon: "chart-simple",
+            },
+            {
+                heading: "Banner Konser",
+                route: "/dashboard/bannerkonser",
+                name: "bannerkonser",
+                keenthemesIcon: "picture",
             },
             {
                 heading: "Pengguna",

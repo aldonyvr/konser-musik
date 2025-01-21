@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TiketRequest;
+use App\Models\Konser;
 use App\Models\Tiket;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;  
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class TiketController extends Controller
 {
@@ -60,12 +62,42 @@ class TiketController extends Controller
             'data' => $add
         ]);
     }
-    public function edit ($uuid){
-        $tiket = Tiket::findByUuid($uuid);
-        return response()->json([
-            'success' => true,
-            'data' => $tiket
-        ]);
+    public function edit($uuid)
+    {
+        try {
+            // Cari tiket berdasarkan konser_id
+            
+            $konser = Konser::findByUuid($uuid);
+        
+            // Check if ticket exists
+            if (!$konser) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Konser not found'
+                ], 404);
+            }
+            
+            // Get associated concert if ticket exists
+            $tiket = Tiket::where('konsers_id', $konser->id)->first();
+        
+            // Add concert data to ticket response
+            $tiket->konser = $konser;
+        
+            return response()->json([
+                'success' => true,
+                'data' => $tiket
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Resource not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
+        }
     }
     public function update(Request $request, $uuid)
     {

@@ -11,17 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pembayarans', function (Blueprint $table) {
+        Schema::create('data_pemesanans', function (Blueprint $table) {
             $table->id();
             $table->uuid()->unique();
             $table->foreignId('tiket_id')->references('id')->on('tikets')->onDelete('cascade');
-            $table->foreignId('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->string('status_pembayaran')->default('pending');
-            $table->string('metode_pembayaran');
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('nama_pemesan');
+            $table->string('email_pemesan');
+            $table->string('telepon_pemesan');
+            $table->string('alamat_pemesan');
+            $table->string('tanggal_pemesan');
+            $table->string('jumlah_tiket');
+            $table->string('total_harga');
             $table->timestamps();
-        
         });
-        
     }
 
     /**
@@ -29,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pembayarans');
+        Schema::dropIfExists('data_pemesanans');
     }
 };

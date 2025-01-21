@@ -11,15 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jenistiket', function (Blueprint $table) {
+        Schema::create('lokasis', function (Blueprint $table) {
             $table->id();
-            $table->uuid()->unique();
-            $table->string('status');
+            $table->foreignId('konsers_id')->references('id')->on('konsers')->onDelete('cascade')->nullable();
+            $table->string('lokasi')->nullable();
             $table->timestamps();
-        
-            
         });
-        
     }
 
     /**
@@ -27,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jenistikets');
+        Schema::dropIfExists('lokasis');
     }
 };

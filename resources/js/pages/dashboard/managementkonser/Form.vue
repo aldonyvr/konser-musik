@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { block, unblock } from "@/libs/utils";
 import { onMounted, ref, watch, computed } from "vue";
-import * as Yup from "yup";
 import axios from "@/libs/axios";
 import { toast } from "vue3-toastify";
 import type { Konser } from "@/types";
 import ApiService from "@/core/services/ApiService";
 import { useRole } from "@/services/useRole";
+import * as yup from "yup";
 
 const props = defineProps({
     selected: {
@@ -37,6 +37,27 @@ function getEdit() {
         });
 }
 
+const formSchema = yup.object().shape({
+    title: yup.string()
+        .required("Nama konser wajib diisi")
+        .min(3, "Nama konser minimal 3 karakter"),
+    lokasi: yup.string()
+        .required("Lokasi wajib diisi")
+        .min(5, "Lokasi"),
+    kontak: yup.string()
+        .required("Kontak wajib diisi")
+        .matches(/^[0-9+()-]+$/, "Kontak hanya boleh berisi angka dan karakter +()-"),
+    tiket_tersedia: yup.number()
+        .required("Total tiket wajib diisi")
+        .typeError("Total tiket harus berupa angka")
+        .positive("Total tiket harus lebih dari 0")
+        .integer("Total tiket harus berupa bilangan bulat"),
+    nama_sosmed: yup.string()
+        .required("Nama sosial media wajib diisi"),
+    deskripsi: yup.string()
+        .required("Deskripsi wajib diisi")
+        .min(10, "Deskripsi minimal 10 karakter"),
+});
 
 
 function submit() {
@@ -45,17 +66,14 @@ function submit() {
     konserFormData.append("jam", user.value.jam);
     konserFormData.append("tanggal", user.value.tanggal);
     konserFormData.append("lokasi", user.value.lokasi);
-    konserFormData.append("harga", user.value.harga);
     konserFormData.append("tiket_tersedia", user.value.tiket_tersedia);
     konserFormData.append("deskripsi", user.value.deskripsi);
     konserFormData.append("nama_sosmed", user.value.nama_sosmed);
+    konserFormData.append("kontak", user.value.kontak);
 
     if (image.value.length) {
         konserFormData.append("image", image.value[0].file);
     }
-    
-    konserFormData.append("vip", user.value.vip);
-    konserFormData.append("reguler", user.value.reguler);
 
     block(document.getElementById("form-user"));
 
@@ -106,7 +124,6 @@ watch(
 
 <template>
     <VForm class="form card mb-10" @submit="submit" :validation-schema="formSchema" id="form-user" ref="formRef">
-
         <div class="card-header align-items-center">
             <h2 class="mb-0">{{ selected ? "Edit" : "Tambah" }} KONSER</h2>
             <button type="button" class="btn btn-sm btn-light-danger ms-auto" @click="emit('close')">
@@ -117,11 +134,8 @@ watch(
         <div class="card-body">
             <div class="row">
                 <div class="col-md-3">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Nama Konser
-                        </label>
+                        <label class="form-label fw-bold fs-6 required">Nama Konser</label>
                         <Field class="form-control form-control-lg form-control-solid" type="text" name="title"
                             autocomplete="off" v-model="user.title" placeholder="Judul Konser" />
                         <div class="fv-plugins-message-container">
@@ -130,17 +144,12 @@ watch(
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
 
                 <div class="col-md-3">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Tanggal
-                        </label>
-                        <Field name="tanggal" class="form-control form-control-lg form-control-solid"
-                            autocomplete="off">
+                        <label class="form-label fw-bold fs-6 required">Tanggal</label>
+                        <Field name="tanggal" class="form-control form-control-lg form-control-solid" autocomplete="off">
                             <date-picker v-model="user.tanggal" placeholder="Masukan Tanggal Keberlakuan"></date-picker>
                         </Field>
                         <div class="fv-plugins-message-container">
@@ -149,15 +158,11 @@ watch(
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
 
                 <div class="col-md-3">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Lokasi
-                        </label>
+                        <label class="form-label fw-bold fs-6 required">Lokasi</label>
                         <Field class="form-control form-control-lg form-control-solid" type="text" name="lokasi"
                             autocomplete="off" v-model="user.lokasi" placeholder="Lokasi" />
                         <div class="fv-plugins-message-container">
@@ -166,17 +171,12 @@ watch(
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
 
                 <div class="col-md-3">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6">
-                            Jam Mulai Konser
-                        </label>
-                        <Field name="jam" class="form-control form-control-lg form-control-solid"
-                            autocomplete="off">
+                        <label class="form-label fw-bold fs-6 required">Jam Mulai Konser</label>
+                        <Field name="jam" class="form-control form-control-lg form-control-solid" autocomplete="off">
                             <date-picker v-model="user.jam" placeholder="Pilih Jam Mulai Konser" :config="{
                                 enableTime: true,
                                 noCalendar: true,
@@ -189,64 +189,38 @@ watch(
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
 
-                
                 <div class="col-md-3">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Kontak
-                        </label>
-                        <Field class="form-control form-control-lg form-control-solid" type="text" name="kontak"
-                            autocomplete="off" v-model="user.kontak" placeholder="" />
+                        <label class="form-label fw-bold fs-6 required">Kontak</label>
+                        <Field class="form-control form-control-lg form-control-solid" type="tel" name="kontak"
+                            autocomplete="off" v-model="user.kontak" placeholder="Nomor Kontak" />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="kontak" />
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
+
                 <div class="col-md-3">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Total Tiket
-                        </label>
-                        <Field class="form-control form-control-lg form-control-solid" type="text" name="tiket_tersedia"
-                            autocomplete="off" v-model="user.tiket_tersedia" placeholder="" />
+                        <label class="form-label fw-bold fs-6 required">Total Tiket</label>
+                        <Field class="form-control form-control-lg form-control-solid" type="number" name="tiket_tersedia"
+                            autocomplete="off" v-model="user.tiket_tersedia" placeholder="Total Tiket" min="1" />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="tiket_tersedia" />
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
+
+
                 <div class="col-md-3">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Harga
-                        </label>
-                        <Field class="form-control form-control-lg form-control-solid" type="text" name="harga"
-                            autocomplete="off" v-model="user.harga"/>
-                        <div class="fv-plugins-message-container">
-                            <div class="fv-help-block">
-                                <ErrorMessage name="harga" />
-                            </div>
-                        </div>
-                    </div>
-                    <!--end::Input group-->
-                </div>
-                <div class="col-md-3">
-                    <!--begin::Input group-->
-                    <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Nama Sosmed
-                        </label>
+                        <label class="form-label fw-bold fs-6 required">Nama Sosmed</label>
                         <Field class="form-control form-control-lg form-control-solid" type="text" name="nama_sosmed"
                             autocomplete="off" v-model="user.nama_sosmed" placeholder="Nama Sosial Media" />
                         <div class="fv-plugins-message-container">
@@ -255,48 +229,12 @@ watch(
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
 
-                <div class="col-md-3">
-                    <!--begin::Input group-->
-                    <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Tiket VIP
-                        </label>
-                        <Field class="form-control form-control-lg form-control-solid" type="text" name="vip"
-                            autocomplete="off" v-model="user.vip" placeholder="" />
-                        <div class="fv-plugins-message-container">
-                            <div class="fv-help-block">
-                                <ErrorMessage name="vip" />
-                            </div>
-                        </div>
-                    </div>
-                    <!--end::Input group-->
-                </div>
-                <div class="col-md-3">
-                    <!--begin::Input group-->
-                    <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Tiket REGULER
-                        </label>
-                        <Field class="form-control form-control-lg form-control-solid" type="text" name="reguler"
-                            autocomplete="off" v-model="user.reguler" placeholder="" />
-                        <div class="fv-plugins-message-container">
-                            <div class="fv-help-block">
-                                <ErrorMessage name="reguler" />
-                            </div>
-                        </div>
-                    </div>
-                    <!--end::Input group-->
-                </div>
                 <div class="col-md-12">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Deskripsi
-                        </label>
-                        <textarea class="form-control form-control-lg form-control-solid" type="text" name="deskripsi"
+                        <label class="form-label fw-bold fs-6 required">Deskripsi</label>
+                        <Field as="textarea" class="form-control form-control-lg form-control-solid" name="deskripsi"
                             autocomplete="off" v-model="user.deskripsi" placeholder="Deskripsi" />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
@@ -304,30 +242,20 @@ watch(
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
 
                 <div class="col-md-12">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6"> Banner Konser</label>
-                        <!--begin::Input-->
-                        <file-upload
-                            :files="image"
-                            :accepted-file-types="fileTypes"
-                            required
-                            v-on:updatefiles="(file) => (image = file)"
-                        ></file-upload>
-                        <!--end::Input-->
+                        <label class="form-label fw-bold fs-6">Banner Konser</label>
+                        <file-upload :files="image" :accepted-file-types="fileTypes" required
+                            v-on:updatefiles="(file) => (image = file)"></file-upload>
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="foto" />
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
-
             </div>
         </div>
         <div class="card-footer d-flex">

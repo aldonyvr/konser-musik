@@ -11,9 +11,10 @@ class Pembayaran extends Model
 
     protected $fillable = [
         'tiket_id', 
+        'user_id',
         'jumlah', 
         'metode_pembayaran', 
-        'status_pembayaran'
+        'status_pembayaran',
     ];
 
     public function tiket () {

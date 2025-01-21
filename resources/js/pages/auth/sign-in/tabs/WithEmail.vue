@@ -12,6 +12,7 @@
         <div class="fv-row mb-5">
             <div class="d-flex flex-stack mb-2">
                 <label class="form-label fw-bold fs-6 mb-0">Password</label>
+                <router-link to="/reset-password" class="link-primary small">Lupa Password?</router-link>
             </div>
             <div class="position-relative mb-3">
                 <Field tabindex="2" class="form-control form-control-lg form-control-solid" type="password" name="password"
@@ -34,6 +35,7 @@
         </div>
     </VForm>
 </template>
+
 
 <script lang="ts">
 import { getAssetPath } from "@/core/helpers/assets";

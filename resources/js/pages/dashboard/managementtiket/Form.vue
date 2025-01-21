@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { block, unblock } from "@/libs/utils";
-import { onMounted, ref, watch, computed } from "vue";
+import { onMounted, ref, watch } from "vue";
 import * as Yup from "yup";
 import axios from "@/libs/axios";
 import { toast } from "vue3-toastify";
-import type { User, Role } from "@/types";
+import type { User } from "@/types";
 import ApiService from "@/core/services/ApiService";
-import { useRole } from "@/services/useRole";
+import { Field, Form as VForm, ErrorMessage } from 'vee-validate';
 
 const props = defineProps({
     selected: {
@@ -17,42 +17,70 @@ const props = defineProps({
 
 const emit = defineEmits(["close", "refresh"]);
 
-const user = ref<User>({} as User);
-const formRef = ref()
+const user = ref<User>({
+    konser: {
+        title: '',
+        tiket_tersedia: '',
+    },
+    harga_vip: '',
+    harga_regular: '',
+    vip: '',
+    reguler: '',
+    opengate: '',
+    closegate: ''
+});
 
+const formRef = ref();
+
+// Form validation schema
+const formSchema = Yup.object().shape({
+    // konser_title: Yup.string().required('Nama Konser wajib diisi'),
+    // konser_tiket_tersedia: Yup.number().required('Total tiket wajib diisi'),
+    vip: Yup.number().required('Tiket VIP wajib diisi'),
+    reguler: Yup.number().required('Tiket Reguler wajib diisi'),
+    harga_vip: Yup.number().required('Harga Tiket VIP wajib diisi'),
+    harga_regular: Yup.number().required('Harga Tiket Reguler wajib diisi'),
+    opengate: Yup.string().required('Open Gate wajib diisi'),
+    closegate: Yup.string().required('Close Gate wajib diisi'),
+
+});
 
 function getEdit() {
+    if (!props.selected) return;
+    
     block(document.getElementById("form-user"));
-    ApiService.get("/konser/edit", props.selected)
+    ApiService.get(`/tiket/edit/${props.selected}`)
         .then(({ data }) => {
             user.value = data.data;
         })
         .catch((err: any) => {
-            toast.error(err.response.data.message);
+            toast.error(err.response?.data?.message || 'Terjadi kesalahan');
         })
         .finally(() => {
             unblock(document.getElementById("form-user"));
         });
 }
 
-
-
 function submit() {
     const formData = new FormData();
-    formData.append("no", user.value.no);
-    formData.append("title", user.value.title);
-    formData.append("harga", user.value.harga);
+    formData.append("title", user.value.konser.title);
+    formData.append("tiket_tersedia", user.value.konser.tiket_tersedia);
+    formData.append("harga_vip", user.value.harga_vip);
+    formData.append("harga_regular", user.value.harga_regular);
     formData.append("vip", user.value.vip);
     formData.append("reguler", user.value.reguler);
     formData.append("opengate", user.value.opengate);
-    formData.append("closegate", user.value.vip);
+    formData.append("closegate", user.value.closegate);
 
     block(document.getElementById("form-user"));
+    
+    const url = props.selected
+        ? `/tiket/update/${props.selected}`
+        : "/tiket/store";
+
     axios({
         method: "post",
-        url: props.selected
-            ? `/tiket/update/${props.selected}`
-            : "/tiket/store",
+        url,
         data: formData,
         headers: {
             "Content-Type": "multipart/form-data",
@@ -62,26 +90,20 @@ function submit() {
             emit("close");
             emit("refresh");
             toast.success("Data berhasil disimpan");
-            formRef.value.resetForm();
+            formRef.value?.resetForm();
         })
         .catch((err: any) => {
-            formRef.value.setErrors(err.response.data.errors);
-            toast.error(err.response.data.message);
+            if (formRef.value && err.response?.data?.errors) {
+                formRef.value.setErrors(err.response.data.errors);
+            }
+            toast.error(err.response?.data?.message || 'Terjadi kesalahan');
         })
         .finally(() => {
             unblock(document.getElementById("form-user"));
         });
 }
 
-const role = useRole();
-const roles = computed(() =>
-    role.data.value?.map((item: Role) => ({
-        uuid: item.uuid,
-        text: item.full_name,
-    }))
-);
-
-onMounted(async () => {
+onMounted(() => {
     if (props.selected) {
         getEdit();
     }
@@ -89,8 +111,8 @@ onMounted(async () => {
 
 watch(
     () => props.selected,
-    () => {
-        if (props.selected) {
+    (newValue) => {
+        if (newValue) {
             getEdit();
         }
     }
@@ -99,14 +121,14 @@ watch(
 
 <template>
     <VForm 
-    class="form card mb-10" 
-    @submit="submit" 
-    :validation-schema="formSchema" 
-    id="form-user" 
-    ref="formRef">
-
+        class="form card mb-10" 
+        @submit="submit" 
+        :validation-schema="formSchema" 
+        id="form-user" 
+        ref="formRef"
+    >
         <div class="card-header align-items-center">
-            <h2 class="mb-0">{{ selected ? "Edit" : "Tambah" }} Negara</h2>
+            <h2 class="mb-0">{{ selected ? "Edit" : "Tambah" }} Tiket</h2>
             <button type="button" class="btn btn-sm btn-light-danger ms-auto" @click="emit('close')">
                 Batal
                 <i class="la la-times-circle p-0"></i>
@@ -115,82 +137,96 @@ watch(
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">
                             Nama Konser
                         </label>
-                        <Field class="form-control form-control-lg form-control-solid" type="text" name="nama_negara"
-                            autocomplete="off" v-model="user.title" placeholder="Nama Negara" />
+                        <Field 
+                            class="form-control form-control-lg form-control-solid" 
+                            type="text" 
+                            name="konser.title"
+                            v-model="user.konser.title" 
+                            placeholder="Nama Konser" 
+                        />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
-                                <ErrorMessage name="title" />
+                                <ErrorMessage name="konser.title" />
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
                 <div class="col-md-6">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">
-                            Harga
+                            Total Jumlah Tiket 
                         </label>
-                        <Field class="form-control form-control-lg form-control-solid" type="text" name="harga"
-                            autocomplete="off" v-model="user.harga" placeholder="Harga" />
+                        <Field 
+                            class="form-control form-control-lg form-control-solid" 
+                            type="number" 
+                            name="konser.tiket_tersedia"
+                            v-model="user.konser.tiket_tersedia" 
+                            placeholder="Total Jumlah Tiket" 
+                        />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
-                                <ErrorMessage name="harga" />
+                                <ErrorMessage name="konser.tiket_tersedia" />
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
                 <div class="col-md-3">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">
                             Tiket VIP
                         </label>
-                        <Field class="form-control form-control-lg form-control-solid" type="text" name="vip"
-                            autocomplete="off" v-model="user.vip" placeholder="Tiket VIP" />
+                        <Field 
+                            class="form-control form-control-lg form-control-solid" 
+                            type="number" 
+                            name="vip"
+                            v-model="user.vip" 
+                            placeholder="Tiket VIP" 
+                        />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="vip" />
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
                 <div class="col-md-3">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">
                             Tiket REGULER
                         </label>
-                        <Field class="form-control form-control-lg form-control-solid" type="text" name="reguler"
-                            autocomplete="off" v-model="user.reguler" placeholder="Tiket REGULER" />
+                        <Field 
+                            class="form-control form-control-lg form-control-solid" 
+                            type="number" 
+                            name="reguler"
+                            v-model="user.reguler" 
+                            placeholder="Tiket REGULER" 
+                        />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="reguler" />
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
                 <div class="col-md-3">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6">
+                        <label class="form-label fw-bold fs-6 required">
                             Open Gate
                         </label>
-                        <Field name="opengate" class="form-control form-control-lg form-control-solid"
-                            autocomplete="off">
-                            <date-picker v-model="user.opengate" placeholder=" Open Gate" :config="{
-                                enableTime: true,
-                                noCalendar: true,
-                                format: 'H:i'
-                            }" />
+                        <Field name="opengate" class="form-control form-control-lg form-control-solid" v-model="user.opengate">
+                            <date-picker 
+                                v-model="user.opengate" 
+                                placeholder="Open Gate" 
+                                :config="{
+                                    enableTime: true,
+                                    noCalendar: true,
+                                    format: 'H:i'
+                                }" 
+                            />
                         </Field>
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
@@ -198,21 +234,22 @@ watch(
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
                 <div class="col-md-3">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6">
+                        <label class="form-label fw-bold fs-6 required">
                             Close Gate
                         </label>
-                        <Field name="closegate" class="form-control form-control-lg form-control-solid"
-                            autocomplete="off">
-                            <date-picker v-model="user.closegate" placeholder=" Close Gate" :config="{
-                                enableTime: true,
-                                noCalendar: true,
-                                format: 'H:i'
-                            }" />
+                        <Field name="closegate" class="form-control form-control-lg form-control-solid" v-model="user.closegate">
+                            <date-picker 
+                                v-model="user.closegate" 
+                                placeholder="Close Gate" 
+                                :config="{
+                                    enableTime: true,
+                                    noCalendar: true,
+                                    format: 'H:i'
+                                }" 
+                            />
                         </Field>
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
@@ -220,11 +257,45 @@ watch(
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
-
-                <!--end::Input group-->
-
+                <div class="col-md-3">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6 required">
+                            Harga Tiket VIP
+                        </label>
+                        <Field 
+                            class="form-control form-control-lg form-control-solid" 
+                            type="number" 
+                            name="harga_vip"
+                            v-model="user.harga_vip" 
+                            placeholder="Harga Tiket VIP" 
+                        />
+                        <div class="fv-plugins-message-container">
+                            <div class="fv-help-block">
+                                <ErrorMessage name="harga_vip" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6 required">
+                            Harga Tiket Regular
+                        </label>
+                        <Field 
+                            class="form-control form-control-lg form-control-solid" 
+                            type="number" 
+                            name="harga_regular"
+                            v-model="user.harga_regular" 
+                            placeholder="Harga Tiket Regular" 
+                        />
+                        <div class="fv-plugins-message-container">
+                            <div class="fv-help-block">
+                                <ErrorMessage name="harga_regular" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="card-footer d-flex">

@@ -22,15 +22,48 @@ const columns = [
     column.accessor("konsers.title", {
         header: "Title",
     }),
-    column.accessor("konsers.harga", {
-        header: "Harga Tiket",
-        cell: cell => currency(cell.getValue())
+    // column.accessor("konsers.harga", {
+    //     header: "Harga Tiket",
+    //     cell: cell => currency(cell.getValue())
+    // }),
+    column.accessor("konsers.tiket_tersedia", {
+        header: "Total Jumlah Tiket",
     }),
     column.accessor("vip", {
         header: "Tiket VIP Tersedia",
+        cell: ({ row }) => {
+            const vip =row.original?.vip ?? "-";
+            const harga_vip = row.original?.harga_vip ?? "-";
+
+            return h("div", [
+                h("div", [
+                    h("span", " Tiket VIP : "),
+                    h("span", vip),
+                ]),
+                h("div", [
+                    h("span", "Harga Tiket VIP :  "),
+                    h("span", harga_vip),
+                ]),
+            ]);
+        },
     }),
     column.accessor("reguler", {
         header: "Tiket REGULER Tersedia",
+        cell: ({ row }) => {
+            const reguler = row.original?.reguler ?? "-";
+            const harga_regular = row.original?.harga_regular ?? "-";
+
+            return h("div", [
+                h("div", [
+                    h("span", " Tiket Regular  : "),
+                    h("span", reguler),
+                ]),
+                h("div", [
+                    h("span", "Harga Tiket Regular :  "),
+                    h("span", harga_regular),
+                ]),
+            ]);
+        },
     }),
     
     column.accessor("gateTimes", {

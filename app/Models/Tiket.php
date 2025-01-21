@@ -12,7 +12,11 @@ class Tiket extends Model
 
     protected $fillable = [
         // 'users_id', 
-        'konsers_id', 
+        'konsers_id',
+        'tiket_tersedia',
+        'regular', 
+        'harga_vip', 
+        'harga_regular', 
         'vip', 
         'reguler', 
         'opengate', 

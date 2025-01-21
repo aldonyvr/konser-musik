@@ -16,6 +16,9 @@ return new class extends Migration
             $table->uuid()->unique();
             // $table->foreignId('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreignId('konsers_id')->references('id')->on('konsers')->onDelete('cascade')->nullable();
+            $table->decimal('harga_vip', 15, 2)->nullable();
+            $table->decimal('harga_regular', 15, 2)->nullable();
+            $table->string('tiket_tersedia')->nullable();
             $table->integer('reguler')->nullable();
             $table->integer('vip')->nullable();
             $table->string('opengate')->nullable();

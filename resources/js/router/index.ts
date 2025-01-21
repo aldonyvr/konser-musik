@@ -41,6 +41,14 @@ const routes: Array<RouteRecordRaw> = [
         },
     },
     {
+        path: "/profile",
+        name: "profile",
+        component: () => import("@/landing/profile.vue"),
+        meta: {
+            pageTitle: "Profile",
+        },
+    },
+    {
         path: "/detail-konser/:uuid",
         name: "detail-konser",
         component: () => import("@/landing/detail-konser.vue"),
@@ -101,12 +109,30 @@ const routes: Array<RouteRecordRaw> = [
                 },
             },
             {
+                path: "/dashboard/riwayattransaksi",
+                name: "dashboard.riwayattransaksi",
+                component: () => import("@/pages/dashboard/riwayattransaksi/Index.vue"),
+                meta: {
+                    pageTitle: "Data Riwayat Transaksi",
+                    breadcrumbs: ["Data Riwayat Transaksi"],
+                },
+            },
+            {
                 path: "/dashboard/laporananalitic",
                 name: "dashboard.laporananalitic",
                 component: () => import("@/pages/dashboard/laporananalitic/Index.vue"),
                 meta: {
                     pageTitle: "Laporan & Analitic",
                     breadcrumbs: ["Laporan & Analitic"],
+                },
+            },
+            {
+                path: "/dashboard/bannerkonser",
+                name: "dashboard.bannerkonser",
+                component: () => import("@/pages/dashboard/banner/Index.vue"),
+                meta: {
+                    pageTitle: "Banner Konser Musik",
+                    breadcrumbs: ["Banner Konser Musik"],
                 },
             },
             {
@@ -170,6 +196,16 @@ const routes: Array<RouteRecordRaw> = [
                 component: () => import("@/pages/auth/sign-up/Index.vue"),
                 meta: {
                     pageTitle: "Sign Up",
+                    middleware: "guest",
+                },
+            },
+            {
+                path: "/reset-password",
+                name: "reset-password",
+                component: () =>
+                    import("@/pages/auth/sign-in/tabs/ResetPassword.vue"),
+                meta: {
+                    pageTitle: "Reset Password",
                     middleware: "guest",
                 },
             },
