@@ -137,7 +137,6 @@ const fetchBanners = async () => {
 fetchBanners()
 
 const initializeSplide = () => {
-  // Pastikan element dengan id 'splide' sudah ada
   const element = document.getElementById('splide');
   if (!element) return;
 
@@ -153,7 +152,10 @@ const initializeSplide = () => {
     perPage: 1,
     perMove: 1,
     pauseOnHover: true,
-    rewind: true, // Menambahkan rewind untuk handling edge cases
+    rewind: true, 
+    width: '100vw',
+    fixedWidth: '100vw', 
+    padding: '0',
   });
 
   splide.mount();
@@ -161,7 +163,6 @@ const initializeSplide = () => {
 
 watch(banners, (newBanners) => {
   if (newBanners.length > 0) {
-    // Gunakan nextTick untuk memastikan DOM sudah diupdate
     nextTick(() => {
       initializeSplide();
     });
@@ -215,7 +216,7 @@ const debouncedSearch = debounce(searchKonser, 300);
 
   <main class="mt-6 ">
     <div class="mt-20">
-      <div id="splide" class="splide">
+      <div id="splide" class="splide ">
         <div class="splide__track">
           <ul class="splide__list">
             <li
@@ -422,11 +423,10 @@ const debouncedSearch = debounce(searchKonser, 300);
   background-color: #f00;
 }
 
-
 .splide__slide img {
   width: 100%;
-  height: 580px;
-  object-fit: contain;
+  height: 560px;
+  object-fit: fill;
   border-radius: 8px;
 }
 
@@ -435,6 +435,12 @@ const debouncedSearch = debounce(searchKonser, 300);
   background: linear-gradient(270deg, #1a1a1a, #2d2d2d, #1a1a1a);
   background-size: 600% 600%;
   animation: gradientShift 15s ease infinite;
+}
+
+.splide {
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
 }
 
 @keyframes gradientShift {

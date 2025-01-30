@@ -115,15 +115,21 @@ class AuthController extends Controller
             <html>
             <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 20px;'>
                 <div style='max-width: 500px; margin: 0 auto;'>
-                    <h1 style='color: #2c5282; font-size: 22px; margin-bottom: 20px;'>Verifikasi Email</h1>
+                    <h1 style='color: #2c5282; font-size: 22px; margin-bottom: 20px;'> Verifikasi Akunmu</h1>
                     
-                    <p style='margin-bottom: 25px;'>Terima kasih telah mendaftar. Untuk mengaktifkan akun Anda, masukkan kode OTP berikut:</p>
+                    <p style='margin-bottom: 25px;'>Halo, calon penonton spesial! 😍
+
+Wah, ada yang siap buat nge-vibes bareng di konser? Sebelum itu, Masukkan kode OTP spesial ini untuk mengaktifkan akunmu:</p>
                     
                     <div style='background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; text-align: center; margin-bottom: 25px;'>
                         <div style='color: #2c5282; font-size: 28px; font-weight: bold; letter-spacing: 4px;'>{$otpCode}</div>
                     </div>
                     
-                    <p style='color: #4a5568; font-size: 14px; margin-bottom: 15px;'>Kode OTP ini akan kadaluarsa dalam 2 menit.</p>
+                    <p style='color: #4a5568; font-size: 14px; margin-bottom: 15px;'>Kode ini cuma berlaku 2 menit! Jadi buruan aktifkan akunmu sebelum waktu habis~ ⏳</p>
+                    <p style='color: #4a5568; font-size: 14px; margin-bottom: 15px;'>Setelah akunmu aktif, kamu bisa langsung cari konser favoritmu dan siap-siap buat momen yang gak terlupakan! 🤩🎤</p>
+                    <p style='color: #4a5568; font-size: 14px; margin-bottom: 15px;'>Sampai ketemu di venue, atau lebih tepatnya… di hatimu? 😳💕</p>
+                    <p style='color: #4a5568; font-size: 14px; margin-bottom: 15px;'>Salam,</p>
+                    <p style='color: #4a5568; font-size: 14px; margin-bottom: 15px;'>Tim Aldony – Tiket Konser Musik Konser 🎶✨</p>
                 </div>
             </body>
             </html>"

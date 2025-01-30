@@ -33,6 +33,22 @@ const routes: Array<RouteRecordRaw> = [
         },
     },
     {
+        path: "/blog",
+        name: "blog",
+        component: () => import("@/landing/blog.vue"),
+        meta: {
+            pageTitle: "Riwayat Konser",
+        },
+    },
+    {
+        path: "/invoice",
+        name: "invoice",
+        component: () => import("@/landing/invoice.vue"),
+        meta: {
+            pageTitle: "Riwayat Konser",
+        },
+    },
+    {
         path: "/kontak",
         name: "kontak",
         component: () => import("@/landing/kontak.vue"),

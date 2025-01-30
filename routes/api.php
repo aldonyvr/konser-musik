@@ -93,25 +93,15 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
             Route::get('get', [TiketController::class, 'get'])->withoutMiddleware(['auth', 'verified']);
             Route::post('', [TiketController::class, 'index']);
             Route::get('edit/{uuid}', [TiketController::class, 'edit'])->withoutMiddleware(['auth', 'verified']);
+            Route::get('show/{uuid}', [TiketController::class, 'show'])->withoutMiddleware(['auth', 'verified']);
             Route::post('store', [TiketController::class, 'store']);
             Route::post('update/{uuid}', [TiketController::class, 'update']);
-            Route::apiResource('tiket', TiketController::class)
-                ->except(['index', 'store']);
+            // Route::apiResource('tiket', TiketController::class)
+            //     ->except(['index', 'store']);
         });
 
         Route::prefix('order')->group(function () {
             Route::resource('orders', OrderController::class)->only(['index', 'show']);
-        });
-
-        Route::prefix('register')->group(function () {
-            Route::post('get', [RegisterController::class, 'get']);
-            Route::post('', [RegisterController::class, 'index']);
-            Route::post('show', [RegisterController::class, 'show']);
-            Route::get('edit/{uuid}', [RegisterController::class, 'edit'])->withoutMiddleware(['auth', 'verified']);
-            Route::post('update/{uuid}', [RegisterController::class, 'update']);
-            Route::post('store', [RegisterController::class, 'store'])->withoutMiddleware(['auth', 'verified']);
-            Route::apiResource('register', RegisterController::class)
-                ->except(['index', 'store']);
         });
 
         Route::prefix('banner')->group(function () {

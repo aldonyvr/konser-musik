@@ -14,8 +14,7 @@ return new class extends Migration
         Schema::create('pembayarans', function (Blueprint $table) {
             $table->id();
             $table->uuid()->unique();
-            $table->foreignId('tiket_id')->references('id')->on('tikets')->onDelete('cascade');
-            $table->foreignId('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreignId('data_pemesanan_id')->references('id')->on('data_pemesanans')->onDelete('cascade');
             $table->string('status_pembayaran')->default('pending');
             $table->string('metode_pembayaran');
             $table->timestamps();

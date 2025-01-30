@@ -65,22 +65,14 @@ class TiketController extends Controller
     public function edit($uuid)
     {
         try {
-            // Cari tiket berdasarkan konser_id
-            
-            $konser = Konser::findByUuid($uuid);
-        
-            // Check if ticket exists
+            $konser = Tiket::findByUuid($uuid);
             if (!$konser) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Konser not found'
                 ], 404);
             }
-            
-            // Get associated concert if ticket exists
             $tiket = Tiket::where('konsers_id', $konser->id)->first();
-        
-            // Add concert data to ticket response
             $tiket->konser = $konser;
         
             return response()->json([
@@ -118,11 +110,32 @@ class TiketController extends Controller
     
     public function show($uuid)
     {
-        $tiket = Tiket::findByUuid($uuid);
-        return response()->json([
-            'status' => true,
-            'pasien' => $tiket,
-        ]);
+        try {
+            $konser = Konser::findByUuid($uuid);
+            if (!$konser) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Konser not found'
+                ], 404);
+            }
+            $tiket = Tiket::where('konsers_id', $konser->id)->first();
+            $tiket->konser = $konser;
+        
+            return response()->json([
+                'success' => true,
+                'data' => $tiket
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Resource not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
 

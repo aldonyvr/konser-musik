@@ -154,7 +154,7 @@ const submitBooking = async () => {
 const getTicketDetails = async () => {
     try {
         console.log("konserId:", konserId); 
-        const response = await axios.get(`/tiket/edit/${konserId}`);
+        const response = await axios.get(`/tiket/show/${konserId}`);
         if (response.data.success) {
             ticketDetails.value = response.data.data;
             console.log(`response ${response}`);

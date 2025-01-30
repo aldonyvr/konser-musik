@@ -26,7 +26,7 @@
             <router-link to="/riwayat-konser" class="nav-link" active-class="active">Riwayat Konser</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/riwayat-konser" class="nav-link" active-class="active">Blog</router-link>
+            <router-link to="/blog" class="nav-link" active-class="active">Blog</router-link>
           </li>
           <li class="nav-item">
             <router-link to="/kontak" class="nav-link" active-class="active">Kontak Kami</router-link>
