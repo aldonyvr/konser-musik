@@ -3,142 +3,122 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
-use Midtrans\Notification;
+use App\Models\Tiket;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\DataPemesanan;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
-use Midtrans\Config;
-use Midtrans\Snap;
 
 class DataPemesananController extends Controller
 {
-    public function get()
-    {
-        try {
-            $pemesanan = DataPemesanan::all();
-            return response()->json([
-                'success' => true,
-                'data' => $pemesanan
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error retrieving booking data: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
     public function store(Request $request)
     {
-      
-    }
-
-    public function show(Request $request)
-    {
+        // dd($request->all());
         try {
-            $validator = Validator::make($request->all(), [
-                'id' => 'required'
+            $request->validate([
+                'tiketId' => 'required|exists:tikets,uuid',
+                'reguler' => 'integer|min:0|required_without_all:vip',
+                'vip' => 'integer|min:0|required_without_all:reguler',
+                'totalPrice' => 'required|numeric|min:0',
+                'tickets' => 'required|array|min:1',
+                'tickets.*.nama_pemesan' => 'required|string',
+                'tickets.*.email_pemesan' => 'required|email',
+                'tickets.*.telepon_pemesan' => 'required|string',
+                'tickets.*.alamat_pemesan' => 'required|string',
+                'tickets.*.type' => 'required|in:regular,vip',
             ]);
 
-            if ($validator->fails()) {
+            $tiket = Tiket::where('uuid', $request->tiketId)->firstOrFail();
+
+            if ($request->reguler > $tiket->reguler || $request->vip > $tiket->vip) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
-                ], 422);
+                    'message' => 'Not enough tickets available'
+                ], 400);
             }
 
-            $pemesanan = DataPemesanan::find($request->id);
-            
-            if (!$pemesanan) {
+            DB::beginTransaction();
+
+            try {
+                $tiket->reguler -= $request->reguler;
+                $tiket->vip -= $request->vip;
+                $tiket->save();
+
+                foreach ($request->tickets as $ticketData) {
+                    DataPemesanan::create([
+                        'tiket_id' => $tiket->id,
+                        'user_id' => Auth::id(),
+                        'nama_pemesan' => $ticketData['nama_pemesan'],
+                        'email_pemesan' => $ticketData['email_pemesan'],
+                        'telepon_pemesan' => $ticketData['telepon_pemesan'],
+                        'alamat_pemesan' => $ticketData['alamat_pemesan'],
+                        'tanggal_pemesan' => Carbon::now()->format('Y-m-d'),
+                        'jumlah_tiket' => 1,
+                        'total_harga' => $ticketData['type'] === 'vip' ? $tiket->harga_vip : $tiket->harga_regular
+                    ]);
+                }
+
+                $orderId = 'ORDER-' . Str::random(10);  
+                $snapToken = $this->generateSnapToken([
+                    'order_id' => $orderId,
+                    'gross_amount' => $request->totalPrice,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Booking created successfully',
+                    'snap_token' => $snapToken,
+                    'order_id' => $orderId
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollback();
                 return response()->json([
                     'success' => false,
-                    'message' => 'Booking not found'
-                ], 404);
+                    'message' => 'Booking failed: ' . $e->getMessage()
+                ], 500);
             }
-
-            return response()->json([
-                'success' => true,
-                'data' => $pemesanan
-            ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error retrieving booking data: ' . $e->getMessage()
+                'message' => 'Booking failed: ' . $e->getMessage()
             ], 500);
         }
     }
 
-    public function edit($uuid)
+    private function generateSnapToken($params)
     {
-        try {
-            $pemesanan = DataPemesanan::where('tiket_id', $uuid)->first();
-            
-            if (!$pemesanan) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Booking not found'
-                ], 404);
-            }
+        \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+        \Midtrans\Config::$isProduction = false;
+        \Midtrans\Config::$isSanitized = true;
+        \Midtrans\Config::$is3ds = true;
 
-            return response()->json([
-                'success' => true,
-                'data' => $pemesanan
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error retrieving booking data: ' . $e->getMessage()
-            ], 500);
-        }
+        return \Midtrans\Snap::getSnapToken([
+            'transaction_details' => [
+                'order_id' => $params['order_id'],
+                'gross_amount' => $params['gross_amount'],
+            ],
+        ]);
     }
 
-    public function update(Request $request, $uuid)
+    public function show()
+    {    
+        $dataPemesanan = DataPemesanan::where('user_id', Auth::id())->get();
+        return response()->json([
+            'data' => $dataPemesanan
+        ]);
+    }
+
+    public function index()
     {
-        try {
-            $validator = Validator::make($request->all(), [
-                'nama_pemesan' => 'required|string',
-                'email_pemesan' => 'required|email',
-                'telepon_pemesan' => 'required|string',
-                'alamat_pemesan' => 'required|string',
-                'total_harga' => 'required|numeric|min:0'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $pemesanan = DataPemesanan::where('tiket_id', $uuid)->first();
-            
-            if (!$pemesanan) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Booking not found'
-                ], 404);
-            }
-
-            $pemesanan->update($request->all());
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Booking updated successfully',
-                'data' => $pemesanan
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error updating booking data: ' . $e->getMessage()
-            ], 500);
-        }
+        $dataPemesanan = DataPemesanan::all();
+        return response()->json([
+            'data' => $dataPemesanan
+        ]);
     }
 }

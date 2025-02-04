@@ -122,6 +122,6 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
             Route::post('show', [DataPemesananController::class, 'show']);
             Route::get('edit/{uuid}', [DataPemesananController::class, 'edit']);
             Route::post('update/{uuid}', [DataPemesananController::class, 'update']);
-            Route::post('store', [DataPemesananController::class, 'store']);
+            Route::post('store', [DataPemesananController::class, 'store'])->withoutMiddleware(['auth', 'verified']);
         });
     });

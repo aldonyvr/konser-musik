@@ -10,14 +10,14 @@ import { useAuthStore } from "@/stores/auth";
 const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
-const konserId = route.params.uuid;
+const tiketId = route.params.uuid;
 const ticketDetails = ref<any>(null);
 const showLoginModal = ref(false);
 const showBookingForm = ref(false);
-
 const reguler = ref(0);
 const vip = ref(0);
 const MAX_TOTAL_TICKETS = 10;
+const isSubmitting = ref(false);
 const totalTickets = computed(() => reguler.value + vip.value);
 
 const ticketPrices = computed(() => ({
@@ -41,30 +41,19 @@ const totalPrice = computed(() => {
 });
 
 const updateTicketForms = () => {
-    const regularForms = [];
-    for (let i = 0; i < reguler.value; i++) {
-        regularForms.push({
+    ['regular', 'vip'].forEach(type => {
+        const count = type === 'regular' ? reguler.value : vip.value;
+        ticketForms.value[type] = Array.from({ length: count }, () => ({
             nama_pemesan: '',
             email_pemesan: '',
             telepon_pemesan: '',
             alamat_pemesan: '',
-            type: 'regular'
-        });
-    }
-    ticketForms.value.regular = regularForms;
-
-    const vipForms = [];
-    for (let i = 0; i < vip.value; i++) {
-        vipForms.push({
-            nama_pemesan: '',
-            email_pemesan: '',
-            telepon_pemesan: '',
-            alamat_pemesan: '',
-            type: 'vip'
-        });
-    }
-    ticketForms.value.vip = vipForms;
+            type,
+            total_harga: ticketPrices.value[type],
+        }));
+    });
 };
+
 
 const checkAuthStatus = async () => {
     try {
@@ -94,72 +83,88 @@ const handleBooking = async () => {
 const submitBooking = async () => {
     if (!authStore.isAuthenticated) {
         showLoginModal.value = true;
-        showBookingForm.value = false;
+        return;
+    }
+
+    if (reguler.value > availableTickets.value.regular || vip.value > availableTickets.value.vip) {
+        alert('Jumlah tiket yang dipilih melebihi stok yang tersedia.');
         return;
     }
 
     const allForms = [...ticketForms.value.regular, ...ticketForms.value.vip];
-    const isValid = allForms.every(form =>
-        form.nama_pemesan && form.email_pemesan && form.telepon_pemesan && form.alamat_pemesan
-    );
+    const isValid = allForms.every(form => {
+        return form.nama_pemesan &&
+            form.nama_pemesan.trim() !== '' &&
+            form.email_pemesan &&
+            form.email_pemesan.trim() !== '' &&
+            form.telepon_pemesan &&
+            form.telepon_pemesan.trim() !== '' &&
+            form.alamat_pemesan &&
+            form.alamat_pemesan.trim() !== '';
+    });
 
     if (!isValid) {
-        alert('Please fill in all fields for each ticket');
+        alert('Mohon lengkapi semua data pemesan untuk setiap tiket');
         return;
     }
 
     try {
+        isSubmitting.value = true;
+
+        if (!tiketId) {
+            throw new Error('Invalid ticket ID');
+        }
+        const formattedForms = allForms.map(form => ({
+            ...form,
+            total_harga: form.type === 'vip' ? ticketPrices.value.vip : ticketPrices.value.regular
+        }));
+
         const bookingData = {
-            konserId: konserId,
+            tiketId: ticketDetails.value?.uuid,
             reguler: reguler.value,
             vip: vip.value,
             totalPrice: totalPrice.value,
-            tickets: allForms
+            tickets: formattedForms
         };
 
+        console.log('Sending booking data:', bookingData);
+
         const response = await axios.post('/datapemesan/store', bookingData);
-        
+
         if (response.data.success && response.data.snap_token) {
-            window.snap.pay(response.data.snap_token, {
-                onSuccess: function(result) {
-                    alert('Payment success!');
-                    router.push('/invoice/' + response.data.order_id);
-                },
-                onPending: function(result) {
-                    alert('Payment pending. Please complete your payment.');
-                    router.push('/invoice/' + response.data.order_id);
-                },
-                onError: function(result) {
-                    alert('Payment failed.');
-                    console.error('Payment Error:', result);
-                },
-                onClose: function() {
-                    alert('You closed the payment window without completing the payment.');
+            // Redirect ke halaman pembayaran dengan menyertakan snap token
+            router.push({
+                path: '/payment',
+                query: { 
+                    token: response.data.snap_token,
+                    order_id: response.data.order_id
                 }
             });
         } else {
-            throw new Error('Failed to get payment token');
+            throw new Error('Gagal mendapatkan token pembayaran');
         }
     } catch (error) {
+        console.error('Booking error:', error);
+        isSubmitting.value = false;
         if (error.response?.status === 401) {
             showLoginModal.value = true;
             showBookingForm.value = false;
         } else {
             console.error('Booking failed:', error);
-            alert('Booking failed. Please try again.');
+            alert(error.response?.data?.message || 'Pemesanan gagal. Silakan coba lagi.');
         }
     }
 };
 
 const getTicketDetails = async () => {
     try {
-        console.log("konserId:", konserId); 
-        const response = await axios.get(`/tiket/show/${konserId}`);
+        console.log("tiketId:", tiketId);
+        const response = await axios.get(`/tiket/show/${tiketId}`);
         if (response.data.success) {
             ticketDetails.value = response.data.data;
-            console.log(`response ${response}`);
+            console.log('Ticket details:', ticketDetails);
         } else {
-            console.log(`response ${response}`);
+            console.error('Failed to get ticket details:', response.data);
             router.push('/');
         }
     } catch (error) {
@@ -169,7 +174,6 @@ const getTicketDetails = async () => {
 };
 
 const emit = defineEmits(['close']);
-
 const redirectToSignIn = () => {
     router.push('/sign-in');
     emit('close');
@@ -321,8 +325,8 @@ onMounted(() => {
                                                 <div class="input-group">
                                                     <button class="btn btn-outline-secondary" @click="decrementVip"
                                                         :disabled="vip <= 0">-</button>
-                                                    <input type="number" class="form-control text-center"
-                                                        :value="vip" @input="handleVipInput" min="0"
+                                                    <input type="number" class="form-control text-center" :value="vip"
+                                                        @input="handleVipInput" min="0"
                                                         :max="Math.min(availableTickets.vip, MAX_TOTAL_TICKETS - reguler)"
                                                         :disabled="totalTickets >= MAX_TOTAL_TICKETS && vip === 0">
                                                     <button class="btn btn-outline-secondary" @click="incrementVip"
@@ -349,37 +353,31 @@ onMounted(() => {
         </div>
 
         <div v-if="showLoginModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Authentication Required</h5>
-                    <button type="button" class="btn-close" @click="showLoginModal = false"></button>
-                </div>
-                
-                <div class="modal-body">
-                    <p class="text-center mb-4">Please sign in or create an account to continue booking tickets.</p>
-                    
-                    <div class="flex-row mt-15 d-flex justify-content-center gap-2">
-                        <button 
-                            class="btn btn-primary col-4"
-                            @click="redirectToSignIn"
-                        >
-                            Sign In
-                            <i class="bi bi-box-arrow-in-right ms-2"></i>
-                        </button>
-                        
-                        <button 
-                            class="btn btn-outline-warning"
-                            @click="redirectToSignUp"
-                        >
-                            Create Account
-                            <i class="bi bi-person-plus ms-2"></i>
-                        </button>
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Authentication Required</h5>
+                        <button type="button" class="btn-close" @click="showLoginModal = false"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <p class="text-center mb-4">Please sign in or create an account to continue booking tickets.</p>
+
+                        <div class="flex-row mt-15 d-flex justify-content-center gap-2">
+                            <button class="btn btn-primary col-4" @click="redirectToSignIn">
+                                Sign In
+                                <i class="bi bi-box-arrow-in-right ms-2"></i>
+                            </button>
+
+                            <button class="btn btn-outline-warning" @click="redirectToSignUp">
+                                Create Account
+                                <i class="bi bi-person-plus ms-2"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
         <!-- Booking Form Modal -->
         <div class="modal fade" :class="{ 'show d-block': showBookingForm && authStore.isAuthenticated }" tabindex="-1"
@@ -391,7 +389,6 @@ onMounted(() => {
                         <button type="button" class="btn-close" @click="showBookingForm = false"></button>
                     </div>
                     <div class="modal-body">
-                        <!-- Regular Tickets Section -->
                         <div v-if="reguler > 0">
                             <h5 class="ticket-section-title">Regular Tickets</h5>
                             <div v-for="(form, index) in ticketForms.regular" :key="'regular-' + index"
@@ -400,7 +397,7 @@ onMounted(() => {
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label class="form-label">Nama Lengkap</label>
-                                        <input type="text" class="form-control" v-model="form.name_pemesan" required>
+                                        <input type="text" class="form-control" v-model="form.nama_pemesan" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Email</label>
@@ -447,8 +444,13 @@ onMounted(() => {
                         </div>
 
                         <div class="booking-confirmation">
-                            <button class="btn btn-primary btn-lg w-100" @click="submitBooking">
-                                Konfirmasi Pemesanan
+                            <button class="btn btn-primary btn-lg w-100" @click="submitBooking"
+                                :disabled="isSubmitting">
+                                <span v-if="!isSubmitting">Konfirmasi Pemesanan</span>
+                                <span v-else>
+                                    <i class="bi bi-hourglass-split me-2"></i>
+                                    Memproses...
+                                </span>
                             </button>
                         </div>
                     </div>

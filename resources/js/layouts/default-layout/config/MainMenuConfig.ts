@@ -49,12 +49,7 @@ const MainMenuConfig: Array<MenuItem> = [
                 name: "laporananalitic",
                 keenthemesIcon: "chart-simple",
             },
-            {
-                heading: "Banner Konser",
-                route: "/dashboard/bannerkonser",
-                name: "bannerkonser",
-                keenthemesIcon: "picture",
-            },
+            
             {
                 heading: "Pengguna",
                 route: "/dashboard/pengguna",
@@ -100,6 +95,12 @@ const MainMenuConfig: Array<MenuItem> = [
                 route: "/dashboard/setting",
                 name: "setting",
                 keenthemesIcon: "setting-2",
+            },
+            {
+                heading: "Banner Konser",
+                route: "/dashboard/bannerkonser",
+                name: "bannerkonser",
+                keenthemesIcon: "picture",
             },
         ],
     },

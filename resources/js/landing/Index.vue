@@ -227,7 +227,7 @@ const debouncedSearch = debounce(searchKonser, 300);
               <img
                 :src="`${banner.image}`"
                 :alt="banner.title || 'Banner Rekomendasi'"
-                class="w-full h-[580px] object-cover"
+                class="w-full h-[400px] object-cover"
               />
             </li>
           </ul>
@@ -425,7 +425,7 @@ const debouncedSearch = debounce(searchKonser, 300);
 
 .splide__slide img {
   width: 100%;
-  height: 560px;
+  height: 580px;
   object-fit: fill;
   border-radius: 8px;
 }

@@ -41,6 +41,14 @@ const routes: Array<RouteRecordRaw> = [
         },
     },
     {
+        path: "/payment",
+        name: "payment",
+        component: () => import("@/landing/payment.vue"),
+        meta: {
+            pageTitle: "Riwayat Konser",
+        },
+    },
+    {
         path: "/invoice",
         name: "invoice",
         component: () => import("@/landing/invoice.vue"),
