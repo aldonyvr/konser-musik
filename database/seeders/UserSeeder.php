@@ -23,10 +23,19 @@ class UserSeeder extends Seeder
 
         User::create([
             'name' => 'User',
+            'photo' => '/media/musik/profileuser.jpg',
             'email' => 'user@gmail.com',
             'role_id' => 2,
             'password' => bcrypt('12345678'),
             'phone' => '08123162631',
         ])->assignRole('user');
+
+        // User::create([
+        //     'name' => 'Scanner Admin',
+        //     'email' => 'admscanner@gmail.com',
+        //     'role_id' => 3,
+        //     'password' => bcrypt('12345678'),
+        //     'phone' => '08123162631',
+        // ])->assignRole('scanner');
     }
 }

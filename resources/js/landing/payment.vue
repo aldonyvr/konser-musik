@@ -36,8 +36,18 @@ onMounted(() => {
     window.snap.pay(token, {
         onSuccess: async function (result) {
             paymentStatus.value = 'success';
-            await fetchTickets(orderId);
-            router.push('/payment');
+            try {
+                await fetchTickets(orderId);
+                // Add delay before redirect to ensure data is processed
+                setTimeout(() => {
+                    router.push({ 
+                        name: 'riwayat-konser',  // Make sure this matches your route name
+                        params: { tab: 'tickets' }
+                    });
+                }, 1500);
+            } catch (error) {
+                console.error('Error processing payment:', error);
+            }
         },
         onPending: function (result) {
             paymentStatus.value = 'pending';

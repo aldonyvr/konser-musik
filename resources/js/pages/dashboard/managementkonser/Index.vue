@@ -19,29 +19,32 @@ const columns = [
     column.accessor("no", {
         header: "No",
     }),
+    column.accessor("image", {
+        header: "Image",
+        cell: cell => h('img', {src: `${cell.getValue()}`, width: 150 })
+    }),
     column.accessor("title", {
         header: "Nama Konser",
     }),
     column.accessor("lokasi", {
         header: "Lokasi",
     }),
-    column.accessor("tiket_tersedia", {
-        header: "Total Tiket Tersedia",
-    }),
-    // column.accessor("harga", {
-    //     header: "Harga",
-    //     cell: cell => currency(cell.getValue())
-    // }),
     column.accessor("tanggal", {
         header: "Tanggal",
     }),
     column.accessor("jam", {
         header: "Jam",
     }),
-    column.accessor("image", {
-        header: "Image",
-        cell: cell => h('img', {src: `${cell.getValue()}`, width: 150 })
+    column.accessor("tiket_tersedia", {
+        header: "Total Tiket",
     }),
+    // column.accessor("harga", {
+    //     header: "Harga",
+    //     cell: cell => currency(cell.getValue())
+    // }),
+   
+    
+    
     // column.accessor("deskripsi", {
     //     header: "Deskripsi",
     // }),

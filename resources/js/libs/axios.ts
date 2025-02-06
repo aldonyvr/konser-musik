@@ -1,10 +1,15 @@
-import Axios from "axios";
+import axios from 'axios';
 import JwtService from "@/core/services/JwtService";
 import { useTahunStore } from "@/stores/tahun";
 import { formDataToObject } from "./utils";
 
-const axios = Axios.create({
+const instance = axios.create({
     baseURL: import.meta.env.VITE_APP_API_URL,
+    withCredentials: true,
+    headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json'
+    },
     transformRequest: [
         (data) => {
             const store = useTahunStore();
@@ -22,18 +27,22 @@ const axios = Axios.create({
                 };
             }
         },
-        ...Axios.defaults.transformRequest,
+        ...axios.defaults.transformRequest,
     ],
 });
 
-axios.interceptors.request.use((config) => {
+// Add request interceptor to add CSRF token
+instance.interceptors.request.use(config => {
+    const token = document.head.querySelector('meta[name="csrf-token"]');
+    if (token) {
+        config.headers['X-CSRF-TOKEN'] = token.content;
+    }
     config.headers["Authorization"] = "Bearer " + JwtService.getToken();
     config.headers["Accept"] = "application/json";
-
     return config;
 });
 
-axios.interceptors.response.use((response) => {
+instance.interceptors.response.use((response) => {
     if (response.data == null) {
         return Promise.reject({
             error: "Error",
@@ -51,4 +60,4 @@ axios.interceptors.response.use((response) => {
     return response;
 });
 
-export default axios;
+export default instance;

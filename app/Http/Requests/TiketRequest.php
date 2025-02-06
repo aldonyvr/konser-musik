@@ -30,6 +30,12 @@ class TiketRequest extends FormRequest
             'vip' => '',
             'opengate' => '',
             'closegate' => '',
+            'gate_a_capacity' => '',
+            'gate_b_capacity' => '',
+            'gate_c_capacity' => '',
+            'gate_d_capacity' => '',
+            'gate_e_capacity' => '',
+            
         ];
     }
 }

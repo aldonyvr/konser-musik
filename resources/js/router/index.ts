@@ -30,6 +30,7 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/landing/riwayat-konser.vue"),
         meta: {
             pageTitle: "Riwayat Konser",
+            requiresAuth: true,
         },
     },
     {

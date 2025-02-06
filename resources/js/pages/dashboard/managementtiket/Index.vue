@@ -51,6 +51,11 @@ const columns = [
         header: "Tiket REGULER Tersedia",
         cell: ({ row }) => {
             const reguler = row.original?.reguler ?? "-";
+            const gate_a_capacity = row.original?.gate_a_capacity ?? "-";
+            const gate_b_capacity = row.original?.gate_b_capacity ?? "-";
+            const gate_c_capacity = row.original?.gate_c_capacity ?? "-";
+            const gate_d_capacity = row.original?.gate_d_capacity ?? "-";
+            const gate_e_capacity = row.original?.gate_e_capacity ?? "-";
             const harga_regular = row.original?.harga_regular ?? "-";
 
             return h("div", [
@@ -62,6 +67,28 @@ const columns = [
                     h("span", "Harga Tiket Regular :  "),
                     h("span", harga_regular),
                 ]),
+                
+                h("div", [
+                    h("span", " Gate A  : "),
+                    h("span", gate_a_capacity),
+                ]),
+                h("div", [
+                    h("span", " Gate B  : "),
+                    h("span", gate_b_capacity),
+                ]),
+                h("div", [
+                    h("span", " Gate C  : "),
+                    h("span", gate_c_capacity),
+                ]),
+                h("div", [
+                    h("span", " Gate D  : "),
+                    h("span", gate_d_capacity),
+                ]),
+                h("div", [
+                    h("span", " Gate E  : "),
+                    h("span", gate_e_capacity),
+                ]),
+                
             ]);
         },
     }),

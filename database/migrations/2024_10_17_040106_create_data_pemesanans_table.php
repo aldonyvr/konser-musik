@@ -1,4 +1,4 @@
-...<?php
+<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -22,7 +22,9 @@ return new class extends Migration
             $table->string('alamat_pemesan');
             $table->string('tanggal_pemesan');
             $table->string('jumlah_tiket');
+            $table->string('status_pembayaran');
             $table->string('total_harga');
+            $table->string('gate_type')->nullable(); // Add this column to store which gate was selected
             $table->timestamps();
         });
     }

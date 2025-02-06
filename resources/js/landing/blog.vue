@@ -2,38 +2,38 @@
 import KTHeader from "@/layouts/default-layout/components/header/NavbarLanding.vue";
 import Footer from "@/Layouts/default-layout/components/footer/Footer.vue";
 
-const steps = [
-  {
-    number: 1,
-    title: "Cari Konser Favorit Anda",
-    description: "Jelajahi daftar konser musik yang tersedia di website kami.",
-    icon: "🎵",
-  },
-  {
-    number: 2,
-    title: "Pilih Tiket yang Sesuai",
-    description: "Pilih jenis tiket sesuai kebutuhan Anda, mulai dari reguler hingga VIP.",
-    icon: "🎫",
-  },
-  {
-    number: 3,
-    title: "Isi Data Pemesanan",
-    description: "Masukkan informasi Anda untuk memastikan tiket terkonfirmasi.",
-    icon: "📝",
-  },
-  {
-    number: 4,
-    title: "Lakukan Pembayaran",
-    description: "Bayar tiket Anda dengan metode pembayaran yang tersedia.",
-    icon: "💳",
-  },
-  {
-    number: 5,
-    title: "Nikmati Konsernya!",
-    description: "Bawa tiket Anda dan bersiaplah untuk pengalaman musik yang luar biasa.",
-    icon: "🎉",
-  },
-];
+// const steps = [
+//   {
+//     number: 1,
+//     title: "Cari Konser Favorit Anda",
+//     description: "Jelajahi daftar konser musik yang tersedia di website kami.",
+//     icon: "🎵",
+//   },
+//   {
+//     number: 2,
+//     title: "Pilih Tiket yang Sesuai",
+//     description: "Pilih jenis tiket sesuai kebutuhan Anda, mulai dari reguler hingga VIP.",
+//     icon: "🎫",
+//   },
+//   {
+//     number: 3,
+//     title: "Isi Data Pemesanan",
+//     description: "Masukkan informasi Anda untuk memastikan tiket terkonfirmasi.",
+//     icon: "📝",
+//   },
+//   {
+//     number: 4,
+//     title: "Lakukan Pembayaran",
+//     description: "Bayar tiket Anda dengan metode pembayaran yang tersedia.",
+//     icon: "💳",
+//   },
+//   {
+//     number: 5,
+//     title: "Nikmati Konsernya!",
+//     description: "Bawa tiket Anda dan bersiaplah untuk pengalaman musik yang luar biasa.",
+//     icon: "🎉",
+//   },
+// ];
 </script>
 
 <template>
@@ -47,7 +47,7 @@ const steps = [
     <div class="py-10"></div>
     <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center">
       <h1 class="text-5xl font-bold mt-20">Selamat Datang di Dunia Musik!</h1>
-      <p class="mt-4 text-xl">
+      <p class="mt-4 text-xl ">
         Nikmati pengalaman konser terbaik dengan pemesanan tiket yang mudah dan cepat.
       </p>
     </div>

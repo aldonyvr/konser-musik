@@ -13,7 +13,7 @@ class KonserSeeder extends Seeder
     {
         Konser::create([
             'title' => 'Arditho Pramono',
-            'tanggal' => '2024-12-14',
+            'tanggal' => '2025-12-14',
             'lokasi' => 'YOGYAKARTA',
             'jam' => '10.00',
             'tiket_tersedia' => '150',
@@ -80,7 +80,7 @@ Acara ini dirancang dengan konsep modern dan intim, menawarkan tata lampu yang m
         ]);
         Konser::create([
             'title' => 'Nadin Amizah',
-            'tanggal' => '2025-01-10',
+            'tanggal' => '2025-03-10',
             'lokasi' => 'SURABAYA',
             'jam' => '20.00 ',
             'tiket_tersedia' => '150',
@@ -127,7 +127,7 @@ Konser dimulai pukul 20:00 WIB di lokasi yang eksklusif dan nyaman untuk penonto
         ]);
         Konser::create([
             'title' => 'Cigarettes after sex',
-            'tanggal' => '2024-12-14',
+            'tanggal' => '2025-12-14',
             'lokasi' => 'JAKARTA',
             'jam' => '20.00',
             'tiket_tersedia' => '150',

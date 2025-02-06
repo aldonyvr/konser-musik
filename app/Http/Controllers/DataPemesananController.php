@@ -7,6 +7,7 @@ use App\Models\Tiket;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\DataPemesanan;
+use App\Models\Konser;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -44,6 +45,14 @@ class DataPemesananController extends Controller
             try {
                 $tiket->reguler -= $request->reguler;
                 $tiket->vip -= $request->vip;
+
+                // Update gate capacity
+                foreach ($request->tickets as $ticketData) {
+                    if ($ticketData['type'] === 'regular') {
+                        $gateField = $ticketData['gate'] . '_capacity';
+                        $tiket->$gateField -= 1;
+                    }
+                }
                 $tiket->save();
 
                 foreach ($request->tickets as $ticketData) {
@@ -56,7 +65,9 @@ class DataPemesananController extends Controller
                         'alamat_pemesan' => $ticketData['alamat_pemesan'],
                         'tanggal_pemesan' => Carbon::now()->format('Y-m-d'),
                         'jumlah_tiket' => 1,
-                        'total_harga' => $ticketData['type'] === 'vip' ? $tiket->harga_vip : $tiket->harga_regular
+                        'status_pembayaran' => 'Successfully',
+                        'total_harga' => $ticketData['type'] === 'vip' ? $tiket->harga_vip : $tiket->harga_regular,
+                        'gate_type' => $ticketData['type'] === 'regular' ? $ticketData['gate'] : null,
                     ]);
                 }
 
@@ -114,11 +125,50 @@ class DataPemesananController extends Controller
         ]);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $dataPemesanan = DataPemesanan::all();
+        $per = $request->per ?? 10;
+        $page = $request->page ? $request->page - 1 : 0;
+        $query = DataPemesanan::query();
+
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('nama_pemesan', 'like', "%{$request->search}%")
+                  ->orWhere('email_pemesan', 'like', "%{$request->search}%")
+                  ->orWhere('telepon_pemesan', 'like', "%{$request->search}%");
+            });
+        }
+        if ($request->kota) {
+            $query->where('lokasi', $request->kota);
+        }
+        DB::statement('set @no=0+' . $page * $per);
+        $data = $query->with('tiket.konsers')->latest()->get();
+
+        return response()->json($data);
+    }
+
+    public function getAllKonser(Request $request)
+    {
         return response()->json([
-            'data' => $dataPemesanan
+            'success' => true,
+            'data' => Konser::all()
         ]);
+    }
+
+    public function getPurchasedTickets()
+    {
+        try {
+            $tickets = DataPemesanan::where('user_id', Auth::id())
+                ->with(['tiket.konsers'])
+                ->where('status_pembayaran', 'Successfully')
+                ->get();
+
+            return response()->json($tickets);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch tickets: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -14,7 +14,6 @@ const tiketId = route.params.uuid;
 const ticketDetails = ref<any>(null);
 const showLoginModal = ref(false);
 const showBookingForm = ref(false);
-const reguler = ref(0);
 const vip = ref(0);
 const MAX_TOTAL_TICKETS = 10;
 const isSubmitting = ref(false);
@@ -35,25 +34,85 @@ const ticketForms = ref({
     vip: [] as any[]
 });
 
+// Add gate management
+const selectedGate = ref({
+    gate_a: 0,
+    gate_b: 0,
+    gate_c: 0,
+    gate_d: 0,
+    gate_e: 0
+});
+
+const gateCapacity = computed(() => ({
+    gate_a: ticketDetails.value?.gate_a_capacity || 0,
+    gate_b: ticketDetails.value?.gate_b_capacity || 0,
+    gate_c: ticketDetails.value?.gate_c_capacity || 0
+}));
+
+const reguler = computed(() =>
+    selectedGate.value.gate_a +
+    selectedGate.value.gate_b +
+    selectedGate.value.gate_c +
+    selectedGate.value.gate_d +
+    selectedGate.value.gate_e
+);
+
 const totalPrice = computed(() => {
     return (reguler.value * ticketPrices.value.regular) +
         (vip.value * ticketPrices.value.vip);
 });
 
+// Add computed property to group regular tickets by gate
+const groupedRegularTickets = computed(() => {
+    const groups = {
+        gate_a: { name: 'Gate A', tickets: [] },
+        gate_b: { name: 'Gate B', tickets: [] },
+        gate_c: { name: 'Gate C', tickets: [] },
+        gate_d: { name: 'Gate D', tickets: [] },
+        gate_e: { name: 'Gate E', tickets: [] }
+    };
+
+    ticketForms.value.regular.forEach(ticket => {
+        const gateKey = ticket.gate;
+        if (groups[gateKey]) {
+            groups[gateKey].tickets.push(ticket);
+        }
+    });
+
+    // Only return gates that have tickets
+    return Object.fromEntries(
+        Object.entries(groups).filter(([_, value]) => value.tickets.length > 0)
+    );
+});
+
 const updateTicketForms = () => {
-    ['regular', 'vip'].forEach(type => {
-        const count = type === 'regular' ? reguler.value : vip.value;
-        ticketForms.value[type] = Array.from({ length: count }, () => ({
-            nama_pemesan: '',
-            email_pemesan: '',
-            telepon_pemesan: '',
-            alamat_pemesan: '',
-            type,
-            total_harga: ticketPrices.value[type],
-        }));
+    // Handle VIP tickets
+    ticketForms.value.vip = Array(vip.value).fill('').map(() => ({
+        nama_pemesan: '',
+        email_pemesan: '',
+        telepon_pemesan: '',
+        alamat_pemesan: '',
+        type: 'vip',
+        total_harga: ticketPrices.value.vip
+    }));
+
+    // Handle regular tickets with gates
+    ticketForms.value.regular = [];
+    Object.entries(selectedGate.value).forEach(([gate, count]) => {
+        for (let i = 0; i < count; i++) {
+            ticketForms.value.regular.push({
+                nama_pemesan: '',
+                email_pemesan: '',
+                telepon_pemesan: '',
+                alamat_pemesan: '',
+                type: 'regular',
+                gate: gate,
+                total_harga: ticketPrices.value.regular,
+                gate_name: gates.value.find(g => g.id.includes(gate.split('_')[1]))?.name || gate
+            });
+        }
     });
 };
-
 
 const checkAuthStatus = async () => {
     try {
@@ -135,7 +194,7 @@ const submitBooking = async () => {
             // Redirect ke halaman pembayaran dengan menyertakan snap token
             router.push({
                 path: '/payment',
-                query: { 
+                query: {
                     token: response.data.snap_token,
                     order_id: response.data.order_id
                 }
@@ -184,15 +243,6 @@ const redirectToSignUp = () => {
     emit('close');
 };
 
-const handleRegularInput = (event: Event) => {
-    const value = parseInt((event.target as HTMLInputElement).value) || 0;
-    const maxAllowed = Math.min(
-        availableTickets.value.regular,
-        MAX_TOTAL_TICKETS - vip.value
-    );
-    reguler.value = Math.min(Math.max(0, value), maxAllowed);
-};
-
 const handleVipInput = (event: Event) => {
     const value = parseInt((event.target as HTMLInputElement).value) || 0;
     const maxAllowed = Math.min(
@@ -200,18 +250,6 @@ const handleVipInput = (event: Event) => {
         MAX_TOTAL_TICKETS - reguler.value
     );
     vip.value = Math.min(Math.max(0, value), maxAllowed);
-};
-
-const incrementRegular = () => {
-    if (reguler.value < availableTickets.value.regular && totalTickets.value < MAX_TOTAL_TICKETS) {
-        reguler.value++;
-    }
-};
-
-const decrementRegular = () => {
-    if (reguler.value > 0) {
-        reguler.value--;
-    }
 };
 
 const incrementVip = () => {
@@ -223,6 +261,56 @@ const incrementVip = () => {
 const decrementVip = () => {
     if (vip.value > 0) {
         vip.value--;
+    }
+};
+
+const gates = computed(() => [
+    {
+        id: 'gate_a_capacity',
+        name: 'Gate A',
+        capacity: ticketDetails.value?.gate_a_capacity || 0,
+        count: selectedGate.value.gate_a || 0
+    },
+    {
+        id: 'gate_b_capacity',
+        name: 'Gate B',
+        capacity: ticketDetails.value?.gate_b_capacity || 0,
+        count: selectedGate.value.gate_b || 0
+    },
+    {
+        id: 'gate_c_capacity',
+        name: 'Gate C',
+        capacity: ticketDetails.value?.gate_c_capacity || 0,
+        count: selectedGate.value.gate_c || 0
+    },
+    {
+        id: 'gate_d_capacity',
+        name: 'Gate D',
+        capacity: ticketDetails.value?.gate_d_capacity || 0,
+        count: selectedGate.value.gate_d || 0
+    },
+    {
+        id: 'gate_e_capacity',
+        name: 'Gate E',
+        capacity: ticketDetails.value?.gate_e_capacity || 0,
+        count: selectedGate.value.gate_e || 0
+    }
+].filter(gate => gate.capacity > 0));
+
+const handleGateIncrement = (gateId: string) => {
+    const gate = gateId.split('_')[1];
+    const maxTotal = MAX_TOTAL_TICKETS - vip.value;
+    const currentTotal = reguler.value;
+
+    if (currentTotal < maxTotal && selectedGate.value[`gate_${gate}`] < ticketDetails.value[`${gateId}`]) {
+        selectedGate.value[`gate_${gate}`]++;
+    }
+};
+
+const handleGateDecrement = (gateId: string) => {
+    const gate = gateId.split('_')[1];
+    if (selectedGate.value[`gate_${gate}`] > 0) {
+        selectedGate.value[`gate_${gate}`]--;
     }
 };
 
@@ -252,7 +340,9 @@ onMounted(() => {
                                 alt="Concert Image">
                             <div class="description-container mb-10 mt-10">
                                 <div class="description-title">Deskripsi :</div>
-                                <span class="description-text">{{ ticketDetails?.konser?.deskripsi }}</span>
+                                <div class="description-wrapper">
+                                    <span class="description-text">{{ ticketDetails?.konser?.deskripsi }}</span>
+                                </div>
                             </div>
                         </div>
 
@@ -276,52 +366,56 @@ onMounted(() => {
                                 </div>
 
                                 <div class="ticket-type-selection mb-4">
-                                    <label class="ticket-label mb-3">Pilih Tiket Anda:</label>
                                     <div class="ticket-options">
-                                        <!-- Regular Ticket Option -->
-                                        <div class="ticket-option">
-                                            <div class="ticket-type-header">
-                                                <i class="bi bi-ticket-perforated-fill text-primary"></i>
-                                                <span class="ticket-name text-white">Regular</span>
-                                            </div>
-                                            <div class="ticket-features">
-                                                <p>✓ Regular seating</p>
-                                                <p>✓ Standard amenities</p>
-                                                <p>Tersedia: {{ availableTickets.regular }}</p>
-                                            </div>
-                                            <div class="ticket-price">{{ currency(ticketPrices.regular) }}</div>
-                                            <div class="ticket-quantity mt-3">
-                                                <label class="form-label">Jumlah Tiket:</label>
-                                                <div class="input-group">
-                                                    <button class="btn btn-outline-secondary" @click="decrementRegular"
-                                                        :disabled="reguler <= 0">-</button>
-                                                    <input type="number" class="form-control text-center"
-                                                        :value="reguler" @input="handleRegularInput" min="0"
-                                                        :max="Math.min(availableTickets.regular, MAX_TOTAL_TICKETS - vip)"
-                                                        :disabled="totalTickets >= MAX_TOTAL_TICKETS && reguler === 0">
-                                                    <button class="btn btn-outline-secondary" @click="incrementRegular"
-                                                        :disabled="reguler >= availableTickets.regular || totalTickets >= MAX_TOTAL_TICKETS">+</button>
+                                        <template v-if="gates.length > 0">
+                                            <div v-for="gate in gates" :key="gate.id" class="ticket-option">
+                                                <div class="ticket-type-header">
+                                                    <i class="bi bi-door-open text-primary"></i>
+                                                    <span class="ticket-name"> Regular - {{ gate.name }}</span>
+                                                </div>
+                                                <div
+                                                    class="ticket-features d-flex justify-content-between align-items-center">
+                                                    <p class="mb-0 ms-5">{{ currency(ticketPrices.regular) }}</p>
+                                                    <p class="mb-0">Tersedia: {{ gate.capacity }}</p>
                                                 </div>
 
+                                                <div class="ticket-quantity mt-3">
+                                                    
+                                                    <label class="form-label ms-5">Jumlah Tiket:</label>
+                                                    <div class="input-group">
+                                                        <button class="btn btn-outline-secondary"
+                                                            @click="handleGateDecrement(gate.id)"
+                                                            :disabled="selectedGate[`gate_${gate.id.split('_')[1]}`] <= 0">
+                                                            -
+                                                        </button>
+                                                        <input type="number" class="form-control text-center"
+                                                            v-model="selectedGate[`gate_${gate.id.split('_')[1]}`]"
+                                                            :max="gate.capacity" min="0"
+                                                            :disabled="totalTickets >= MAX_TOTAL_TICKETS">
+                                                        <button class="btn btn-outline-secondary"
+                                                            @click="handleGateIncrement(gate.id)" :disabled="selectedGate[`gate_${gate.id.split('_')[1]}`] >= gate.capacity ||
+                                                                totalTickets >= MAX_TOTAL_TICKETS">
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
+                                        </template>
 
-                                        </div>
-
-                                        <!-- VIP Ticket Option -->
+                                        <!-- VIP Section -->
                                         <div class="ticket-option">
                                             <div class="ticket-type-header">
                                                 <i class="bi bi-star-fill text-warning"></i>
-                                                <span class="ticket-name text-white">VIP</span>
+                                                <span class="ticket-name text-white"> VIP</span>
                                             </div>
-                                            <div class="ticket-features">
-                                                <p>✓ Premium seating</p>
-                                                <p>✓ Exclusive merchandise</p>
-                                                <p>✓ Meet & Greet access</p>
+                                            <div class="ticket-features  d-flex justify-content-between align-items-center">
+                                                <p class="ms-5">✓ Premium seating</p>
                                                 <p>Tersedia: {{ availableTickets.vip }}</p>
                                             </div>
-                                            <div class="ticket-price">{{ currency(ticketPrices.vip) }}</div>
+                                            <p class="ms-5">✓ Exclusive merchandise</p>
+                                            <div class="ticket-price ms-5">{{ currency(ticketPrices.vip) }}</div>
                                             <div class="ticket-quantity mt-3">
-                                                <label class="form-label">Jumlah Tiket:</label>
+                                                <label class="form-label ms-5">Jumlah Tiket:</label>
                                                 <div class="input-group">
                                                     <button class="btn btn-outline-secondary" @click="decrementVip"
                                                         :disabled="vip <= 0">-</button>
@@ -389,38 +483,45 @@ onMounted(() => {
                         <button type="button" class="btn-close" @click="showBookingForm = false"></button>
                     </div>
                     <div class="modal-body">
-                        <div v-if="reguler > 0">
-                            <h5 class="ticket-section-title">Regular Tickets</h5>
-                            <div v-for="(form, index) in ticketForms.regular" :key="'regular-' + index"
-                                class="ticket-form">
-                                <h6> {{ index + 1 }}</h6>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Nama Lengkap</label>
-                                        <input type="text" class="form-control" v-model="form.nama_pemesan" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Email</label>
-                                        <input type="email" class="form-control" v-model="form.email_pemesan" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Nomor Telepon</label>
-                                        <input type="tel" class="form-control" v-model="form.telepon_pemesan" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Alamat</label>
-                                        <input type="text" class="form-control" v-model="form.alamat_pemesan" required>
+                        <!-- Regular Tickets Section -->
+                        <template v-if="reguler > 0">
+                            <!-- Group tickets by gate -->
+                            <template v-for="(gate, gateName) in groupedRegularTickets" :key="gateName">
+                                <div v-if="gate.tickets.length > 0" class="mb-4">
+                                    <h5 class="ticket-section-title">{{ gate.name }} Tickets</h5>
+                                    <div v-for="(form, index) in gate.tickets" 
+                                        :key="'regular-' + gateName + index" 
+                                        class="ticket-form p-3 mb-3 border rounded">
+                                        <h6>Ticket {{ index + 1 }} - {{ gate.name }}</h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Nama Lengkap</label>
+                                                <input type="text" class="form-control" v-model="form.nama_pemesan" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Email</label>
+                                                <input type="email" class="form-control" v-model="form.email_pemesan" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Nomor Telepon</label>
+                                                <input type="tel" class="form-control" v-model="form.telepon_pemesan" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Alamat</label>
+                                                <input type="text" class="form-control" v-model="form.alamat_pemesan" required>
+                                            </div>
+                                        </div>
+                                        <hr v-if="index < gate.tickets.length - 1">
                                     </div>
                                 </div>
-                                <hr v-if="index < ticketForms.regular.length - 1">
-                            </div>
-                        </div>
+                            </template>
+                        </template>
 
                         <!-- VIP Tickets Section -->
                         <div v-if="vip > 0">
                             <h5 class="ticket-section-title mt-4">VIP Tickets</h5>
                             <div v-for="(form, index) in ticketForms.vip" :key="'vip-' + index" class="ticket-form">
-                                <h6> {{ index + 1 }}</h6>
+                                <h6>Ticket VIP {{ index + 1 }}</h6>
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label class="form-label">Nama Lengkap</label>
@@ -503,7 +604,11 @@ onMounted(() => {
 .description-container {
     padding: 0 1.5rem;
     flex: 1;
-    /* Membuat deskripsi mengambil ruang sisa */
+}
+
+.description-wrapper {
+    width: 100%;
+    padding: 0.5rem;
 }
 
 .description-title {
@@ -516,8 +621,10 @@ onMounted(() => {
     font-size: 0.95rem;
     line-height: 1.6;
     color: #666;
-    word-wrap: break-word;
-    /* Agar teks panjang dapat terbungkus */
+    text-align: justify;
+    max-width: 100%; /* Memastikan tidak melebihi lebar parent */
+    width: 100%; /* Menggunakan lebar penuh yang tersedia */
+    display: block; /* Memastikan elemen mengambil ruang penuh */
 }
 
 .concert-title {
@@ -662,7 +769,7 @@ hr {
 
 .ticket-option {
     flex: 1;
-    min-width: 100px;
+    min-width: 480px;
     border: 1px solid #cbcaca;
     border-radius: 12px;
     padding: 1.5rem;
@@ -671,57 +778,30 @@ hr {
     transition: all 0.3s ease;
 }
 
-.ticket-option:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-}
-
-.ticket-option.selected {
-    border-color: var(--bs-primary);
-    box-shadow: 0 8px 20px rgba(13, 110, 253, 0.15);
-}
-
-.ticket-radio {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    width: 1.2rem;
-    height: 1.2rem;
-    cursor: pointer;
-}
-
-.ticket-type-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.ticket-type-header i {
-    font-size: 1.5rem;
-}
-
-.ticket-name {
-    font-size: 1.25rem;
-    font-weight: 600;
+.ticket-section-header {
     color: #333;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #eee;
 }
 
-.ticket-features {
-    margin: 1rem 0;
+/* Remove the media query since we always want vertical layout */
+@media (max-width: 768px) {
+    .ticket-options {
+        gap: 1rem;
+    }
 }
 
-.ticket-features p {
-    margin: 0.5rem 0;
-    color: #666;
-    font-size: 0.9rem;
+.ticket-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.ticket-price {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--bs-primary);
-    margin-top: 1rem;
+/* Optional: Add some spacing between sections */
+.ticket-type-selection {
+    margin: 0 auto;
 }
 
 /* Add a subtle animation for selection */
@@ -750,5 +830,39 @@ hr {
     .ticket-option {
         width: 100%;
     }
+}
+
+.section-title {
+    width: 100%;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.ticket-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ticket-option {
+    border: 1px solid #ddd;
+    padding: 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.ticket-form {  
+    transition: all 0.3s ease;
+}
+
+.ticket-form:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.ticket-section-title {
+    border-bottom: 2px solid var(--bs-primary);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
 }
 </style>

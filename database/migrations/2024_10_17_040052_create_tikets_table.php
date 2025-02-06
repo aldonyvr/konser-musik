@@ -23,6 +23,11 @@ return new class extends Migration
             $table->integer('vip')->nullable();
             $table->string('opengate')->nullable();
             $table->string('closegate')->nullable();
+            $table->integer('gate_a_capacity')->default(0)->nullable();
+            $table->integer('gate_b_capacity')->default(0)->nullable();
+            $table->integer('gate_c_capacity')->default(0)->nullable();
+            $table->integer('gate_d_capacity')->default(0)->nullable();
+            $table->integer('gate_e_capacity')->default(0)->nullable();
             $table->timestamps();
         
         });

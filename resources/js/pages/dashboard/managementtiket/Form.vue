@@ -27,7 +27,12 @@ const user = ref<User>({
     vip: '',
     reguler: '',
     opengate: '',
-    closegate: ''
+    closegate: '',
+    gate_a_regular: '',
+    gate_b_regular: '',
+    gate_c_regular: '',
+    gate_d_regular: '',
+    gate_e_regular: '',
 });
 
 const formRef = ref();
@@ -71,6 +76,11 @@ function submit() {
     formData.append("reguler", user.value.reguler);
     formData.append("opengate", user.value.opengate);
     formData.append("closegate", user.value.closegate);
+    formData.append("gate_a_capacity", user.value.gate_a_capacity);
+    formData.append("gate_b_capacity", user.value.gate_b_capacity);
+    formData.append("gate_c_capacity", user.value.gate_c_capacity);
+    formData.append("gate_d_capacity", user.value.gate_d_capacity);
+    formData.append("gate_e_capacity", user.value.gate_e_capacity);
 
     block(document.getElementById("form-user"));
     
@@ -294,6 +304,79 @@ watch(
                                 <ErrorMessage name="harga_regular" />
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <h4 class="mb-4">Regular Gate Configuration</h4>
+                <div class="col-md-4">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6">
+                            Gate A Capacity
+                        </label>
+                        <Field 
+                            class="form-control form-control-lg form-control-solid" 
+                            type="number" 
+                            name="gate_a_capacity"
+                            v-model="user.gate_a_capacity" 
+                            placeholder="Gate A Capacity" 
+                        />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6">
+                            Gate B Capacity
+                        </label>
+                        <Field 
+                            class="form-control form-control-lg form-control-solid" 
+                            type="number" 
+                            name="gate_b_capacity"
+                            v-model="user.gate_b_capacity" 
+                            placeholder="Gate B Capacity" 
+                        />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6">
+                            Gate C Capacity
+                        </label>
+                        <Field 
+                            class="form-control form-control-lg form-control-solid" 
+                            type="number" 
+                            name="gate_c_capacity"
+                            v-model="user.gate_c_capacity" 
+                            placeholder="Gate C Capacity" 
+                        />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6">
+                            Gate D Capacity
+                        </label>
+                        <Field 
+                            class="form-control form-control-lg form-control-solid" 
+                            type="number" 
+                            name="gate_d_capacity"
+                            v-model="user.gate_d_capacity" 
+                            placeholder="Gate D Capacity" 
+                        />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6">
+                            Gate E Capacity
+                        </label>
+                        <Field 
+                            class="form-control form-control-lg form-control-solid" 
+                            type="number" 
+                            name="gate_e_capacity"
+                            v-model="user.gate_e_capacity" 
+                            placeholder="Gate E Capacity" 
+                        />
                     </div>
                 </div>
             </div>

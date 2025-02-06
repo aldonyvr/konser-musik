@@ -31,12 +31,12 @@ const MainMenuConfig: Array<MenuItem> = [
                 name: "managementtiket",
                 keenthemesIcon: "cheque",
             },
-            {
-                heading: "Pembayaran",
-                route: "/dashboard/pembayaran",
-                name: "pembayaran",
-                keenthemesIcon: "tag",
-            },
+            // {
+            //     heading: "Pembayaran",
+            //     route: "/dashboard/pembayaran",
+            //     name: "pembayaran",
+            //     keenthemesIcon: "tag",
+            // },
             {
                 heading: "Data Riwayat Transaksi",
                 route: "/dashboard/riwayattransaksi",
@@ -55,6 +55,12 @@ const MainMenuConfig: Array<MenuItem> = [
                 route: "/dashboard/pengguna",
                 name: "pengguna",
                 keenthemesIcon: "badge",
+            },
+            {
+                heading: "Banner Konser",
+                route: "/dashboard/bannerkonser",
+                name: "bannerkonser",
+                keenthemesIcon: "picture",
             },
         ],
     },
@@ -96,12 +102,7 @@ const MainMenuConfig: Array<MenuItem> = [
                 name: "setting",
                 keenthemesIcon: "setting-2",
             },
-            {
-                heading: "Banner Konser",
-                route: "/dashboard/bannerkonser",
-                name: "bannerkonser",
-                keenthemesIcon: "picture",
-            },
+            
         ],
     },
 ];

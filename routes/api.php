@@ -11,6 +11,7 @@ use App\Http\Controllers\registerController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\DataPemesananController;
 use App\Models\DataPemesanan;
+use App\Models\Konser;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -26,10 +27,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/cek-sesi-laravel', function () {
-    $auth = Auth::check();
-    return response()->json($auth);
-});
+Route::get('/getKonser', [DataPemesananController::class, 'getAllKonser']);
 
 // Authentication Route
 Route::middleware(['auth', 'json'])->prefix('auth')->group(function () {
@@ -116,12 +114,22 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         });
 
         Route::prefix('datapemesan')->group(function () {
-            Route::get('', [DataPemesananController::class, 'get'])->withoutMiddleware(['auth', 'verified']);
-            Route::post('', [DataPemesananController::class, 'index']);
-            Route::post('notification', [DataPemesananController::class, 'handlePaymentNotification']);
+            Route::get('get', [DataPemesananController::class, 'get'])->withoutMiddleware(['auth', 'verified']);
+            Route::get('getAllKonser', [DataPemesananController::class, 'getAllKonser'])->withoutMiddleware(['auth', 'verified']);
+            Route::post('', [DataPemesananController::class, 'index'])->withoutMiddleware(['auth', 'verified']);
             Route::post('show', [DataPemesananController::class, 'show']);
             Route::get('edit/{uuid}', [DataPemesananController::class, 'edit']);
             Route::post('update/{uuid}', [DataPemesananController::class, 'update']);
             Route::post('store', [DataPemesananController::class, 'store'])->withoutMiddleware(['auth', 'verified']);
+            Route::get('/purchased-tickets', [DataPemesananController::class, 'getPurchasedTickets'])->withoutMiddleware(['auth', 'verified']);
+        });
+
+        Route::middleware(['auth:sanctum', 'role:concert_admin'])->group(function () {
+            Route::post('/ticket/verify-scan', [TicketScannerController::class, 'verifyScan']);
+        });
+
+        Route::middleware(['auth:sanctum', 'role:scanner'])->group(function () {
+            Route::post('/tickets/scan', [TicketScannerController::class, 'scan']);
+            Route::get('/tickets/scan-history', [TicketScannerController::class, 'getScanHistory']);
         });
     });

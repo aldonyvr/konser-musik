@@ -11,7 +11,6 @@ class Tiket extends Model
     use HasFactory, Uuid;
 
     protected $fillable = [
-        // 'users_id', 
         'konsers_id',
         'tiket_tersedia',
         'regular', 
@@ -20,7 +19,12 @@ class Tiket extends Model
         'vip', 
         'reguler', 
         'opengate', 
-        'closegate', 
+        'closegate',
+        'gate_a_capacity',
+        'gate_b_capacity',
+        'gate_c_capacity',
+        'gate_d_capacity',
+        'gate_e_capacity',
     ];
 
     public function konsers () {
@@ -31,5 +35,11 @@ class Tiket extends Model
     }
     public function pembayaran () {
         return $this->hasMany(User::class);
+    }
+    public function gates()
+    {
+        return $this->belongsToMany(Gate::class)
+                    ->withPivot('capacity')
+                    ->withTimestamps();
     }
 }

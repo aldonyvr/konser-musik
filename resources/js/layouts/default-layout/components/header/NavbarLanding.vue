@@ -23,10 +23,10 @@
             <router-link to="/" class="nav-link" active-class="active">Home</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/riwayat-konser" class="nav-link" active-class="active">Riwayat Konser</router-link>
+            <router-link to="/blog" class="nav-link" active-class="active">Blog</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/blog" class="nav-link" active-class="active">Blog</router-link>
+            <router-link to="/riwayat-konser" class="nav-link" active-class="active">Riwayat Konser</router-link>
           </li>
           <li class="nav-item">
             <router-link to="/kontak" class="nav-link" active-class="active">Kontak Kami</router-link>
@@ -66,8 +66,8 @@
             >
               <div v-if="authStore.user?.photo" class="profile-image-container">
                 <img 
-                  :src="`/storage/${authStore.user.photo}`" 
-                  alt="`/storage/${authStore.user.photo}`"
+                  :src="`${authStore.user.photo}`" 
+                  alt="`${authStore.user.photo}`"
                   class="profile-image"
                 >
               </div>
@@ -83,7 +83,7 @@
                   <div class="symbol symbol-50px me-3">
                     <img 
                       v-if="authStore.user?.photo" 
-                      :src="`/storage/${authStore.user.photo}`" 
+                      :src="`${authStore.user.photo}`" 
                       alt="profile"
                       class="rounded-circle"
                     >

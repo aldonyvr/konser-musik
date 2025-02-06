@@ -67,16 +67,11 @@
   
 <script>
 import { useQuery } from "@tanstack/vue-query";
-import { ref, defineComponent, watch, onMounted } from "vue";
+import { ref, defineComponent } from "vue";
 import {
     useVueTable,
     FlexRender,
     getCoreRowModel,
-    getFilteredRowModel,
-    getSortedRowModel,
-    getFacetedRowModel,
-    getFacetedUniqueValues,
-    getPaginationRowModel
 } from "@tanstack/vue-table";
 import axios from "@/libs/axios";
 import { block, unblock } from "@/libs/utils";
@@ -107,45 +102,12 @@ export default defineComponent({
         enabled: {
             type: Boolean,
             default: true
-        },
-        selectFilter: {
-            type: String,
-            default: ""
-        },
-        columnVisibility: {
-            type: Object,
-            default: () => ({})
-        },
-        sorting: {
-            type: Array,
-            default: () => []
-        },
-        rowSelection: {
-            type: Object,
-            default: () => ({})
-        },
-        columnFilters: {
-            type: Array,
-            default: () => []
-        },
-        globalFilter: {
-            type: String,
-            default: ""
-        },
-        columnPinning: {
-            type: Object,
-            default: () => ({})
-        },
-        filters: {
-            type: Object,
-            default: () => ({})
         }
     },
     components: {
         FlexRender
     },
-    emits: ['table-ready'],
-    setup(props, { emit }) {
+    setup(props) {
         const search = ref("");
         const debouncedSearch = ref("");
 
@@ -153,12 +115,12 @@ export default defineComponent({
         const page = ref(1);
 
         const { data = {}, isFetching, refetch } = useQuery({
-            queryKey: [props.queryKey || props.url, props.filters],
+            queryKey: [props.queryKey || props.url],
             queryFn: () => axios.post(props.url, {
                 search: search.value,
                 page: page.value,
                 per: parseInt(per.value),
-                konsers_id: props.filters.konsers_id,
+                ...props.payload
             }).then(res => res.data),
             placeholderData: { data: [] },
             cacheTime: 0,
@@ -176,59 +138,8 @@ export default defineComponent({
                 return data.value.data
             },
             columns: props.columns,
-            state: {
-                sorting: props.sorting,
-                columnVisibility: props.columnVisibility,
-                rowSelection: props.rowSelection,
-                columnFilters: props.columnFilters,
-                globalFilter: props.globalFilter,
-                columnPinning: props.columnPinning
-            },
-            enableRowSelection: true,
-            enableFilters: true,
-            onRowSelectionChange: (newRowSelection) => {
-                props.rowSelection = newRowSelection;
-            },
-            onSortingChange: (newSorting) => {
-                props.sorting = newSorting;
-            },
-            onColumnFiltersChange: (updater) => {
-                const newFilters = typeof updater === 'function' 
-                    ? updater(props.columnFilters)
-                    : updater;
-                props.columnFilters = newFilters;
-            },
-            onColumnVisibilityChange: (updater) => {
-                const newVisibility = typeof updater === 'function'
-                    ? updater(props.columnVisibility)
-                    : updater;
-                props.columnVisibility = newVisibility;
-            },
             getCoreRowModel: getCoreRowModel(),
-            getFilteredRowModel: getFilteredRowModel(),
-            getSortedRowModel: getSortedRowModel(),
-            getFacetedRowModel: getFacetedRowModel(),
-            getFacetedUniqueValues: getFacetedUniqueValues(),
-            getPaginationRowModel: getPaginationRowModel(),
-            onGlobalFilterChange: (newGlobalFilter) => {
-                props.globalFilter = newGlobalFilter;
-            },
-            globalFilterFn: "includesString"
         });
-
-        // Emit table instance after creation
-        onMounted(() => {
-            emit('table-ready', table);
-        });
-
-        // Add watcher for columnVisibility changes
-        watch(() => props.columnVisibility, () => {
-            table.setColumnVisibility(props.columnVisibility);
-        }, { deep: true });
-
-        watch(() => props.columnFilters, () => {
-            refetch();
-        }, { deep: true });
 
         return {
             search, debouncedSearch,

@@ -12,7 +12,7 @@
             <div class="d-flex flex-column flex-md-row align-items-center">
               <!-- Profile Image -->
               <div class="symbol symbol-100px me-4 mb-3 mb-md-0">
-                <img v-if="authStore.user?.photo" :src="`/storage/${authStore.user.photo}`" alt="Profile"
+                <img v-if="authStore.user?.photo" :src="`${authStore.user.photo}`" alt="Profile"
                   class="rounded-circle">
                 <div v-else class="symbol-label bg-light-primary rounded-circle">
                   <KTIcon icon-name="user" icon-class="fs-1" />
