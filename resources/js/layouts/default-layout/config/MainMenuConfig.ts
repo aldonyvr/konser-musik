@@ -51,6 +51,12 @@ const MainMenuConfig: Array<MenuItem> = [
             },
             
             {
+                heading: "Scanner QR CODE",
+                route: "/dashboard/scannerbarcode",
+                name: "scannerbarcode",
+                keenthemesIcon: "scan-barcode",
+            },
+            {
                 heading: "Pengguna",
                 route: "/dashboard/pengguna",
                 name: "pengguna",

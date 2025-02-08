@@ -8,9 +8,6 @@ use Illuminate\Database\Seeder;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         User::create([
@@ -29,13 +26,5 @@ class UserSeeder extends Seeder
             'password' => bcrypt('12345678'),
             'phone' => '08123162631',
         ])->assignRole('user');
-
-        // User::create([
-        //     'name' => 'Scanner Admin',
-        //     'email' => 'admscanner@gmail.com',
-        //     'role_id' => 3,
-        //     'password' => bcrypt('12345678'),
-        //     'phone' => '08123162631',
-        // ])->assignRole('scanner');
     }
 }

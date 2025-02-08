@@ -26,9 +26,6 @@ const columns = [
     //     header: "Harga Tiket",
     //     cell: cell => currency(cell.getValue())
     // }),
-    column.accessor("konsers.tiket_tersedia", {
-        header: "Total Jumlah Tiket",
-    }),
     column.accessor("vip", {
         header: "Tiket VIP Tersedia",
         cell: ({ row }) => {
@@ -125,15 +122,6 @@ const columns = [
                         },
                     },
                     h("i", { class: "la la-pencil fs-2" })
-                ),
-                h(
-                    "button",
-                    {
-                        class: "btn btn-sm btn-icon btn-danger",
-                        onClick: () =>
-                            deleteUser(`/konser/destroy/${cell.getValue()}`),
-                    },
-                    h("i", { class: "la la-trash fs-2" })
                 ),
             ]),
     }),

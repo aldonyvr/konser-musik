@@ -21,13 +21,19 @@ const user = ref<Konser>({} as Konser);
 const formRef = ref()
 const fileTypes = ref(["image/jpeg", "image/png", "image/jpg"]);
 const image = ref<any>([]);
-
+const existingImage = ref('');
 
 function getEdit() {
     block(document.getElementById("form-user"));
     ApiService.get("/konser/edit", props.selected)
         .then(({ data }) => {
             user.value = data.data;
+            // Handle existing image
+            if (data.data.image) {
+                existingImage.value = data.data.image;
+                // Don't convert to File object immediately
+                image.value = [{ source: data.data.image }];
+            }
         })
         .catch((err: any) => {
             toast.error(err.response.data.message);
@@ -62,6 +68,8 @@ const formSchema = yup.object().shape({
 
 function submit() {
     const konserFormData = new FormData();
+    
+    // Add basic form fields
     konserFormData.append("title", user.value.title);
     konserFormData.append("jam", user.value.jam);
     konserFormData.append("tanggal", user.value.tanggal);
@@ -71,37 +79,40 @@ function submit() {
     konserFormData.append("nama_sosmed", user.value.nama_sosmed);
     konserFormData.append("kontak", user.value.kontak);
 
-    if (image.value.length) {
-        konserFormData.append("image", image.value[0].file);
+    // Handle image upload - works for both new and edit
+    if (image.value && image.value.length > 0) {
+        if (image.value[0] instanceof File) {
+            konserFormData.append("image", image.value[0]);
+        } else if (image.value[0].file) {
+            konserFormData.append("image", image.value[0].file);
+        }
     }
 
     block(document.getElementById("form-user"));
 
-    Promise.all([
-        axios({
-            method: "post",
-            url: props.selected
-                ? `/konser/update/${props.selected}`
-                : "/konser/store",
-            data: konserFormData,
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        }),
-    ])
-        .then((konserResponse) => {
-            emit("close");
-            emit("refresh");
-            toast.success("Data konser dan tiket berhasil disimpan");
-            formRef.value.resetForm();
-        })
-        .catch((err: any) => {
-            formRef.value.setErrors(err.response?.data?.errors || {});
-            toast.error(err.response?.data?.message || "Terjadi kesalahan");
-        })
-        .finally(() => {
-            unblock(document.getElementById("form-user"));
-        });
+    axios({
+        method: "post",
+        url: props.selected
+            ? `/konser/update/${props.selected}`
+            : "/konser/store",
+        data: konserFormData,
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    })
+    .then((konserResponse) => {
+        emit("close");
+        emit("refresh");
+        toast.success("Data konser dan tiket berhasil disimpan");
+        formRef.value.resetForm();
+    })
+    .catch((err: any) => {
+        formRef.value.setErrors(err.response?.data?.errors || {});
+        toast.error(err.response?.data?.message || "Terjadi kesalahan");
+    })
+    .finally(() => {
+        unblock(document.getElementById("form-user"));
+    });
 }
 
 
@@ -247,8 +258,23 @@ watch(
                 <div class="col-md-12">
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6">Banner Konser</label>
-                        <file-upload :files="image" :accepted-file-types="fileTypes" required
-                            v-on:updatefiles="(file) => (image = file)"></file-upload>
+                        <div v-if="existingImage" class="mb-3">
+                            <img :src="existingImage" 
+                                 alt="Current Banner" 
+                                 class="img-thumbnail" 
+                                 style="max-height: 200px">
+                        </div>
+                        <file-upload 
+                            :files="image"
+                            :accepted-file-types="fileTypes"
+                            :required="!existingImage"
+                            v-on:updatefiles="(files) => {
+                                image = files;
+                                if (files && files.length > 0) {
+                                    existingImage = null;
+                                }
+                            }"
+                        ></file-upload>
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="foto" />
@@ -265,3 +291,14 @@ watch(
         </div>
     </VForm>
 </template>
+
+<style scoped>
+.img-thumbnail {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 0.25rem;
+    background-color: #fff;
+    max-width: 100%;
+    height: auto;
+}
+</style>

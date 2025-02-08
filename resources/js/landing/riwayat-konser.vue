@@ -8,6 +8,7 @@ import bwipjs from 'bwip-js';
 import axios from "@/libs/axios";
 import html2canvas from 'html2canvas';
 import { currency } from "@/libs/utils"; // Add this import
+import QRCode from 'qrcode';
 
 const activeTickets = computed(() => tickets.value.filter(ticket => ticket.status === 'active'));
 const completedHistory = computed(() => purchaseHistory.value.filter(history => history.status === 'Selesai'));
@@ -18,10 +19,43 @@ const ticketRefs = ref<any>([]);
 const tickets = ref([]);
 const isLoading = ref(true);
 
+const generateBarcodeImage = async (code: string) => {
+    try {
+        const canvas = await bwipjs.toCanvas('', {
+            bcid: 'code128',       // Barcode type
+            text: code,            // Text to encode
+            scale: 3,              // Scale factor
+            height: 10,            // Bar height, in millimeters
+            includetext: true,     // Show human-readable text
+            textxalign: 'center',  // Center the text
+        });
+        return canvas.toDataURL('image/png');
+    } catch (error) {
+        console.error('Error generating barcode:', error);
+        return '';
+    }
+};
+
+const generateQRCode = async (uuid: string) => {
+    try {
+        return await QRCode.toDataURL(uuid, {
+            width: 300,
+            margin: 2,
+            color: {
+                dark: '#000000',
+                light: '#ffffff'
+            }
+        });
+    } catch (error) {
+        console.error('Error generating QR code:', error);
+        return '';
+    }
+};
+
 const fetchPurchasedTickets = async () => {
     try {
         const response = await axios.get('datapemesan/purchased-tickets'); // Use your authenticated axios instance
-        tickets.value = response.data.map(ticket => ({
+        tickets.value = await Promise.all(response.data.map(async ticket => ({
             id: ticket.id,
             name: ticket.tiket?.konsers?.title || '',
             date: ticket.tiket?.konsers?.tanggal || '',
@@ -30,12 +64,13 @@ const fetchPurchasedTickets = async () => {
             seat: ticket.gate_type === 'VIP' ? 'VIP-' + ticket.id : null,
             row: ticket.gate_type === 'VIP' ? String.fromCharCode(65 + (ticket.id % 26)) : null,
             price: currency(ticket.total_harga),
-            barcode: ticket.uuid,
+            barcodeImage: await generateBarcodeImage(ticket.uuid), // Generate barcode image
+            qrcode: await generateQRCode(ticket.uuid),
             status: ticket.status_pembayaran === 'Successfully' ? 'active' : 'pending',
             image: ticket.tiket.konsers?.image || '',
             gate: ticket.gate_type || 'VIP',
             organizer: 'Event Organizer'
-        }));
+        })));
     } catch (error) {
         console.error('Error fetching tickets:', error);
     } finally {
@@ -174,10 +209,11 @@ const generateBarcode = (data: string) => {
 
                         <!-- Right Section -->
                         <div class="ticket-right">
-                            <div class="barcode-section">
-                                <img :src="`https://barcode.tec-it.com/barcode.ashx?data=${ticket.barcode}&code=Code128&multiplebarcodes=false&translate-esc=false&unit=Fit&dpi=96&imagetype=Gif&rotation=0&color=%23000000&bgcolor=%23ffffff&codepage=&qunit=Mm&quiet=0`"
-                                    alt="Barcode" class="barcode" />
-                                <!-- <span class="barcode-number">{{ ticket.barcode }}</span> -->
+                            <div class="qrcode-section">
+                                <img :src="ticket.qrcode" 
+                                     alt="QR Code" 
+                                     class="qrcode mt-7" />
+                                <p class="mt-2">Scan for entry</p>
                             </div>
                             <div class="organizer-info">
                                 <p>{{ ticket.organizer }}</p>
@@ -340,27 +376,10 @@ const generateBarcode = (data: string) => {
     font-weight: 600;
 }
 
-.barcode-section {
-    text-align: center;
-    width: 100%;
-}
-
-.barcode {
-    max-width: 100%;
-    height: auto;
-    margin-bottom: 0.5rem;
-}
-
-.barcode-number {
-    font-family: monospace;
-    color: #666;
-}
-
 .organizer-info {
     text-align: center;
     color: #666;
     font-size: 0.9rem;
-    margin-top: 1rem;
 }
 
 .download-btn {
@@ -378,6 +397,16 @@ const generateBarcode = (data: string) => {
     background-color: #45a049;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+}
+
+.qrcode {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+}
+
+.qrcode-section {
+    text-align: center;
 }
 
 @media (max-width: 768px) {

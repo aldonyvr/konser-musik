@@ -170,6 +170,15 @@ const routes: Array<RouteRecordRaw> = [
                 },
             },
             {
+                path: "/dashboard/scannerbarcode",
+                name: "dashboard.scannerbarcode",
+                component: () => import("@/pages/dashboard/scannerbarcode/Index.vue"),
+                meta: {
+                    pageTitle: "Scanner Barcode",
+                    breadcrumbs: ["Scanner Barcode"],
+                },
+            },
+            {
                 path: "/dashboard/setting",
                 name: "dashboard.setting",
                 component: () => import("@/pages/dashboard/setting/Index.vue"),

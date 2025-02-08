@@ -1,19 +1,21 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\SettingController;
-use App\Http\Controllers\KonserController;
-use App\Http\Controllers\TiketController;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\registerController;
-use App\Http\Controllers\BannerController;
-use App\Http\Controllers\DataPemesananController;
-use App\Models\DataPemesanan;
 use App\Models\Konser;
+use App\Models\DataPemesanan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\TiketController;
+use App\Http\Controllers\BannerController;
+use App\Http\Controllers\KonserController;
+use App\Http\Controllers\ScannerController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\registerController;
+use App\Http\Controllers\DataPemesananController;
+use App\Http\Controllers\TicketScannerController;
 
 
 /*
@@ -122,6 +124,9 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
             Route::post('update/{uuid}', [DataPemesananController::class, 'update']);
             Route::post('store', [DataPemesananController::class, 'store'])->withoutMiddleware(['auth', 'verified']);
             Route::get('/purchased-tickets', [DataPemesananController::class, 'getPurchasedTickets'])->withoutMiddleware(['auth', 'verified']);
+        });
+        Route::prefix('scan')->group(function () {
+            Route::post('/scan-ticket', [ScannerController::class, 'scanTicket']);
         });
 
         Route::middleware(['auth:sanctum', 'role:concert_admin'])->group(function () {

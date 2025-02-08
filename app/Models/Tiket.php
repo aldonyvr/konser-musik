@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\Uuid;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Tiket extends Model
 {
@@ -27,8 +28,9 @@ class Tiket extends Model
         'gate_e_capacity',
     ];
 
-    public function konsers () {
-        return $this->belongsTo(Konser::class);
+    public function konsers(): BelongsTo
+    {
+        return $this->belongsTo(Konser::class, 'konsers_id');
     }
     public function user () {
         return $this->belongsTo(User::class);

@@ -25,35 +25,21 @@ class DataPemesanan extends Model
         'jumlah_tiket',
         'total_harga',
         'gate_type',
-        'last_scanned_at',
-        'scan_count',
-        'is_valid'
+        'is_scanned',
+        'scanned_at',
+        'scan_status',
+        'scanned_by'
     ];
 
     protected $casts = [
         'last_scanned_at' => 'datetime',
-        'is_valid' => 'boolean'
+        'is_valid' => 'boolean',
+        'is_scanned' => 'boolean',
+        'scanned_at' => 'datetime'
     ];
 
     public function tiket(): BelongsTo
     {
         return $this->belongsTo(Tiket::class);
-    }
-
-    public function scanLogs()
-    {
-        return $this->hasMany(TiketScanner::class, 'ticket_id');
-    }
-
-    public function getLastScanAttribute()
-    {
-        return $this->scanLogs()->latest('scanned_at')->first();
-    }
-
-    public function isValidForEntry()
-    {
-        return $this->is_valid && 
-               $this->status_pembayaran === 'Successfully' && 
-               $this->scan_count < config('tickets.max_scans', 1);
     }
 }

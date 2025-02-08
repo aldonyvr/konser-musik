@@ -412,9 +412,6 @@ onMounted(() => {
 
                             <td>
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-icon btn-info" @click="handleEdit(item.uuid)">
-                                        <i class="la la-pencil fs-2"></i>
-                                    </button>
                                     <button class="btn btn-sm btn-icon btn-danger" @click="handleDelete(item.uuid)">
                                         <i class="la la-trash fs-2"></i>
                                     </button>

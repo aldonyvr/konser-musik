@@ -27,7 +27,7 @@ class TiketController extends Controller
 
         DB::statement('set @no=0+' . $page * $per);
         $data = Tiket::with('konsers')->when($request->search, function (Builder $query, string $search) {
-            $query->where('name', 'like', "%$search%")
+            $query->where('title', 'like', "%$search%")
                 ->orWhere('full_name', 'like', "%$search%");
         })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
         return response()->json($data);
@@ -65,29 +65,51 @@ class TiketController extends Controller
     public function edit($uuid)
     {
         try {
-            $konser = Tiket::findByUuid($uuid);
-            if (!$konser) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Konser not found'
-                ], 404);
-            }
-            $tiket = Tiket::where('konsers_id', $konser->id)->first();
-            $tiket->konser = $konser;
-        
+            // Load tiket with konser relationship
+            $tiket = Tiket::with(['konsers' => function($query) {
+                $query->select('id', 'title', 'deskripsi', 'lokasi', 'tanggal', 'image', 'tiket_tersedia');
+            }])
+            ->where('uuid', $uuid)
+            ->firstOrFail();
+
+            // Format the response data
+            $responseData = [
+                'id' => $tiket->id,
+                'uuid' => $tiket->uuid,
+                'harga_regular' => $tiket->harga_regular,
+                'harga_vip' => $tiket->harga_vip,
+                'reguler' => $tiket->reguler,
+                'vip' => $tiket->vip,
+                'opengate' => $tiket->opengate,
+                'closegate' => $tiket->closegate,
+                'gate_a_capacity' => $tiket->gate_a_capacity,
+                'gate_b_capacity' => $tiket->gate_b_capacity,
+                'gate_c_capacity' => $tiket->gate_c_capacity,
+                'konser' => $tiket->konsers ? [
+                    'id' => $tiket->konsers->id,
+                    'title' => $tiket->konsers->title,
+                    'deskripsi' => $tiket->konsers->deskripsi,
+                    'lokasi' => $tiket->konsers->lokasi,
+                    'tanggal' => $tiket->konsers->tanggal,
+                    'tiket_tersedia' => $tiket->konsers->tiket_tersedia,
+                    'image' => $tiket->konsers->image,
+                ] : null
+            ];
+
             return response()->json([
                 'success' => true,
-                'data' => $tiket
+                'data' => $responseData
             ]);
+
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Resource not found'
+                'message' => 'Tiket tidak ditemukan'
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -68,7 +68,6 @@ function getEdit() {
 
 function submit() {
     const formData = new FormData();
-    formData.append("title", user.value.konser.title);
     formData.append("tiket_tersedia", user.value.konser.tiket_tersedia);
     formData.append("harga_vip", user.value.harga_vip);
     formData.append("harga_regular", user.value.harga_regular);

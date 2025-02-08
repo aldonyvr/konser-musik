@@ -9,6 +9,7 @@ use App\Models\Tiket;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;  
+use Illuminate\Support\Facades\Storage;
 
 class KonserController extends Controller
 {
@@ -146,17 +147,58 @@ class KonserController extends Controller
 
     public function update(Request $request, $uuid)
     {
-        $konser = Konser::findByUuid($uuid);
-        if ($konser) {
-            $konser->update($request->all());
+        try {
+            $konser = Konser::findByUuid($uuid);
+            if (!$konser) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Konser not found'
+                ], 404);
+            }
+    
+            $req = $request->validate([
+                'title' => 'required|string|max:255',
+                'tanggal' => 'required|date',
+                'jam' => 'required',
+                'lokasi' => 'required|string|max:255',
+                'tiket_tersedia' => 'required|integer|min:0',
+                'kontak' => 'nullable|string|max:255',
+                'deskripsi' => 'required|string',
+                'nama_sosmed' => 'required|string|max:255',
+                'image' => 'nullable|file|mimes:jpg,png,jpeg|max:2048',
+            ]);
+    
+            // Handle image update
+            if ($request->hasFile('image')) {
+                // Delete old image if exists
+                if ($konser->image) {
+                    $oldPath = str_replace('/storage/', '', $konser->image);
+                    if (Storage::disk('public')->exists($oldPath)) {
+                        Storage::disk('public')->delete($oldPath);
+                    }
+                }
+                
+                // Store new image
+                $imagePath = $request->file('image')->store('media', 'public');
+                $req['image'] = "/storage/" . $imagePath;
+            } else {
+                // If no new image uploaded, keep the existing image
+                unset($req['image']);
+            }
+    
+            $konser->update($req);
+    
             return response()->json([
-                'status' => 'true',
-                'message' => 'data berhasil diubah'
+                'success' => true,
+                'message' => 'Konser updated successfully',
+                'data' => $konser
             ]);
-        } else {
-            return response([
-                'message' => 'gagal mengubah'
-            ]);
+    
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating konser: ' . $e->getMessage()
+            ], 500);
         }
     }
 
