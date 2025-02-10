@@ -142,7 +142,7 @@ class DataPemesananController extends Controller
             $query->where('lokasi', $request->kota);
         }
         DB::statement('set @no=0+' . $page * $per);
-        $data = $query->with('tiket.konsers')->latest()->get();
+        $data = $query->with('tiket.konser')->latest()->get();
 
         return response()->json($data);
     }
@@ -159,7 +159,7 @@ class DataPemesananController extends Controller
     {
         try {
             $tickets = DataPemesanan::where('user_id', Auth::id())
-                ->with(['tiket.konsers'])
+                ->with(['tiket.konser'])
                 ->where('status_pembayaran', 'Successfully')
                 ->get();
 

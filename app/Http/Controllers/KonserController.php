@@ -23,25 +23,29 @@ class KonserController extends Controller
 
     public function index(Request $request)
     {
-        $per = $request->per ?? 10;
-        $page = $request->page ? $request->page - 1 : 0;
-        $query = Konser::query();
+        $query = Konser::with(['tiket' => function($query) {
+            $query->select('id', 'konsers_id', 'harga_regular', 'harga_vip', 'reguler', 'vip', 
+                          'gate_a_capacity', 'gate_b_capacity', 'gate_c_capacity');
+        }]);
 
-        if ($request->search) {
-            $query->where(function ($q) use ($request) {
-                $q->where('title', 'like', "%{$request->search}%")
-                  ->orWhere('deskripsi', 'like', "%{$request->search}%")
-                  ->orWhere('lokasi', 'like', "%{$request->search}%");
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('lokasi', 'like', "%{$search}%");
             });
         }
-        if ($request->kota) {
+
+        if ($request->has('kota') && !empty($request->kota)) {
             $query->where('lokasi', $request->kota);
         }
-        DB::statement('set @no=0+' . $page * $per);
-        $data = $query->latest()
-            ->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
 
-        return response()->json($data);
+        $data = $query->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $data
+        ]);
     }
 
     public function getCities()

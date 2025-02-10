@@ -52,11 +52,22 @@ const konserFilterOptions = computed(() =>
 const dataPemesanan = ref([]);
 
 const filteredDataPemesanan = computed(() => {
-    if (!selectedKonserIds.value.size) return dataPemesanan.value;
+    console.log('Current dataPemesanan:', dataPemesanan.value);
+    console.log('Selected Konser IDs:', selectedKonserIds.value);
     
-    return dataPemesanan.value.filter(item => 
-        selectedKonserIds.value.has(item.tiket.konsers_id)
-    );
+    if (!dataPemesanan.value || dataPemesanan.value.length === 0) {
+        return [];
+    }
+    
+    if (!selectedKonserIds.value.size) {
+        return dataPemesanan.value;
+    }
+    
+    return dataPemesanan.value.filter(item => {
+        const konserId = item.tiket?.konsers_id;
+        console.log('Checking item:', item, 'konserId:', konserId);
+        return selectedKonserIds.value.has(konserId);
+    });
 });
 
 const fetchData = async () => {
@@ -66,7 +77,21 @@ const fetchData = async () => {
             page: 1,
             per: 10
         });
-        dataPemesanan.value = response.data;
+        // Add console.log to debug the response
+        console.log('API Response:', response.data);
+        
+        // Check if response.data is an array or has a data property
+        if (Array.isArray(response.data)) {
+            dataPemesanan.value = response.data;
+        } else if (response.data.data) {
+            dataPemesanan.value = response.data.data;
+        } else {
+            console.error('Unexpected data structure:', response.data);
+            dataPemesanan.value = [];
+        }
+        
+        // Log the processed data
+        console.log('Processed Data:', dataPemesanan.value);
     } catch (error) {
         console.error('Error fetching data:', error);
         toast.error("Gagal memuat data");
@@ -82,7 +107,7 @@ const columns = [
     column.accessor("nama_pemesan", {
         header: "Nama Pemesan",
     }),
-    column.accessor("tiket.konsers.title", {
+    column.accessor("tiket.konser.title", {
         header: "Konser",
     }),
     column.accessor("email_pemesan", {
@@ -105,7 +130,7 @@ const columns = [
         }
     }),
     
-    column.accessor("tiket.konsers_id", {
+    column.accessor("tiket.konser_id", {
         id: 'konsers_id',
         header: "Konser",
         enableColumnFilter: true,
@@ -248,6 +273,7 @@ const itemsPerPage = ref(10);
 
 // Update filtered data with pagination
 const paginatedData = computed(() => {
+    console.log('Calculating pagination for:', filteredDataPemesanan.value);
     const start = (currentPage.value - 1) * itemsPerPage.value;
     const end = start + itemsPerPage.value;
     return filteredDataPemesanan.value.slice(start, end);
@@ -397,22 +423,35 @@ onMounted(() => {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-if="!filteredDataPemesanan.length">
-                            <td colspan="8" class="text-center">Data tidak ditemukan</td>
+                        <tr v-if="isLoading">
+                            <td colspan="9" class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-else-if="!paginatedData.length">
+                            <td colspan="9" class="text-center">Data tidak ditemukan</td>
                         </tr>
                         <tr v-else v-for="(item, index) in paginatedData" :key="item.uuid">
                             <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
                             <td>{{ item.nama_pemesan }}</td>
-                            <td>{{ item.tiket.konsers.title }}</td>
+                            <td>{{ item.tiket?.konsers?.title || 'N/A' }}</td>
                             <td>{{ item.email_pemesan }}</td>
                             <td>{{ item.telepon_pemesan }}</td>
                             <td>{{ item.alamat_pemesan }}</td>
                             <td>{{ new Date(item.tanggal_pemesan).toLocaleDateString('id-ID') }}</td>
-                            <td class="text-success">{{ item.status_pembayaran }}</td>
-
+                            <td>
+                                <span :class="{'text-success': item.status_pembayaran === 'Successfully',
+                                             'text-warning': item.status_pembayaran === 'Pending',
+                                             'text-danger': item.status_pembayaran === 'Failed'}">
+                                    {{ item.status_pembayaran }}
+                                </span>
+                            </td>
                             <td>
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-icon btn-danger" @click="handleDelete(item.uuid)">
+                                    <button class="btn btn-sm btn-icon btn-danger" 
+                                            @click="handleDelete(item.uuid)">
                                         <i class="la la-trash fs-2"></i>
                                     </button>
                                 </div>

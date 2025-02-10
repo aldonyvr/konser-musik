@@ -14,12 +14,11 @@ class Tiket extends Model
     protected $fillable = [
         'konsers_id',
         'tiket_tersedia',
-        'regular', 
-        'harga_vip', 
-        'harga_regular', 
-        'vip', 
-        'reguler', 
-        'opengate', 
+        'reguler',
+        'vip',
+        'harga_regular',
+        'harga_vip',
+        'opengate',
         'closegate',
         'gate_a_capacity',
         'gate_b_capacity',
@@ -28,7 +27,7 @@ class Tiket extends Model
         'gate_e_capacity',
     ];
 
-    public function konsers(): BelongsTo
+    public function konser(): BelongsTo
     {
         return $this->belongsTo(Konser::class, 'konsers_id');
     }

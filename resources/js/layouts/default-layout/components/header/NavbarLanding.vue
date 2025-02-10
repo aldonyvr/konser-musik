@@ -23,13 +23,13 @@
             <router-link to="/" class="nav-link" active-class="active">Home</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/blog" class="nav-link" active-class="active">Blog</router-link>
+            <router-link to="/blog" class="nav-link" active-class="active">About me</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/riwayat-konser" class="nav-link" active-class="active">Riwayat Konser</router-link>
+            <router-link to="/riwayat-konser" class="nav-link" active-class="active">Ticket</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/kontak" class="nav-link" active-class="active">Kontak Kami</router-link>
+            <router-link to="/kontak" class="nav-link" active-class="active">Contact Us</router-link>
           </li>
           <li class="nav-item" v-if="isAdmin">
             <router-link to="/dashboard" class="nav-link" active-class="active">Dashboard</router-link>

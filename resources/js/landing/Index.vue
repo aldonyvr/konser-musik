@@ -20,10 +20,18 @@ const isLoading = ref(false);
 
 const getKonser = async () => {
   try {
-    const response = await axios.get("/konser");
-    konser.value = response.data.data;
-    filteredKonser.value = response.data.data;
-    extractUniqueCities();
+    // Change to get all data without pagination
+    const response = await axios.get("/konser", {
+      params: {
+        per_page: 12 // Increase this number to get more data
+      }
+    });
+    
+    if (response.data.data) {
+      konser.value = response.data.data;
+      filteredKonser.value = response.data.data;
+      extractUniqueCities();
+    }
   } catch (error) {
     console.error("Error fetching concerts:", error);
   }
@@ -106,15 +114,38 @@ const goToEventDetail = (id: number) => {
   router.push(`/detail-konser/${id}`);
 };
 
-const recommendedKonser = computed(() => {
-  return konser.value
-    .filter(concert =>
-      new Date(concert.tanggal) > new Date()
-    )
-    .sort((a, b) => {
-      return new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime();
-    })
-    .slice(0, 4);
+const upcomingConcerts = computed(() => {
+  return konser.value.filter(concert => {
+    // Coming soon concerts: has minimal/no ticket data and future date
+    const hasMinimalTicketData = !concert.tiket || (
+      !concert.tiket.harga_regular &&
+      !concert.tiket.harga_vip &&
+      !concert.tiket.reguler &&
+      !concert.tiket.vip
+    );
+    const isFutureDate = new Date(concert.tanggal) > new Date();
+    return hasMinimalTicketData && isFutureDate;
+  });
+});
+
+const availableConcerts = computed(() => {
+  return konser.value.filter(concert => {
+    // Available concerts: has ticket data and is in the future
+    const hasTicketData = concert.tiket && (
+      concert.tiket.harga_regular ||
+      concert.tiket.harga_vip ||
+      concert.tiket.reguler ||
+      concert.tiket.vip
+    );
+    const isFutureDate = new Date(concert.tanggal) > new Date();
+    return hasTicketData && isFutureDate;
+  });
+});
+
+const pastConcerts = computed(() => {
+  return konser.value.filter(concert => 
+    new Date(concert.tanggal) < new Date()
+  );
 });
 
 interface Banner {
@@ -207,6 +238,57 @@ const debounce = (fn: Function, delay: number) => {
 };
 
 const debouncedSearch = debounce(searchKonser, 300);
+
+// Add pagination data
+const currentPage = ref(1);
+const totalPages = ref(1);
+const perPage = ref(8);
+
+// Add load more function
+const loadMore = async () => {
+  if (currentPage.value >= totalPages.value) return;
+  
+  try {
+    const nextPage = currentPage.value + 1;
+    const response = await axios.get("/konser", {
+      params: {
+        per_page: perPage.value,
+        page: nextPage
+      }
+    });
+    
+    if (response.data.data) {
+      // Append new items to existing arrays
+      konser.value = [...konser.value, ...response.data.data];
+      filteredKonser.value = [...filteredKonser.value, ...response.data.data];
+      currentPage.value = nextPage;
+      totalPages.value = Math.ceil(response.data.total / perPage.value);
+    }
+  } catch (error) {
+    console.error("Error loading more concerts:", error);
+  }
+};
+
+// Add new refs for pagination control
+const initialDisplayCount = 8; // 3 rows x 4 columns
+const showAll = ref(false);
+
+// Computed property for displayed concerts
+const displayedKonser = computed(() => {
+  if (showAll.value) {
+    return filteredKonser.value;
+  }
+  return filteredKonser.value.slice(0, initialDisplayCount);
+});
+
+// Add method to toggle show more/less
+const toggleShowMore = () => {
+  showAll.value = !showAll.value;
+  if (!showAll.value) {
+    // Scroll back to the start of concerts section when showing less
+    document.getElementById('semua-konser')?.scrollIntoView({ behavior: 'smooth' });
+  }
+};
 </script>
 
 <template>
@@ -292,17 +374,56 @@ const debouncedSearch = debounce(searchKonser, 300);
     <div class="container">
       <div class=" mt-18 mb-10">
         <h1 class=" fw-bold" style="font-family: 'Lobster', cursive;">
-          Konser Rekomendasi Spesial
+          Konser Yang Akan Datang
         </h1>
-        <p class="text-muted">Jangan lewatkan konser spektakuler yang akan segera hadir!</p>
+        <p class="text-muted">Konser yang akan segera dibuka penjualan tiketnya!</p>
       </div>
 
       <div class="row ms-2">
-        <div v-for="event in recommendedKonser" :key="event.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+        <div v-if="upcomingConcerts.length === 0" class="text-center">
+          <p>Tidak ada konser yang akan datang saat ini.</p>
+        </div>
+        <div v-for="event in upcomingConcerts" :key="event.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
           <div class="card recommended-concert-card" @click="goToEventDetail(event.uuid)">
             <div class="card-img-wrapper">
-              <img :src="`${event.image}`" class="card-img-top" alt="Recommended Event Image">
-              <div class="recommended-badge">Recommended</div>
+              <img :src="`${event.image}`" class="card-img-top" alt="Upcoming Event Image">
+              <div class="upcoming-badge">Coming Soon</div>
+            </div>
+            <div class="card-body">
+              <h5 class="card-title">{{ event.title }}</h5>
+              <p class="card-text mb-1">
+                <small class="fs-7 fw-bold">
+                  <i class="fa-solid fa-calendar-days me-1" style="color: #ffcc00;"></i> {{ event.tanggal }}
+                </small>
+              </p>
+              <p class="card-text mb-2">
+                <small class="fs-7 fw-bold">
+                  <i class="fa-solid fa-location-dot me-1" style="color: green;"></i> {{ event.lokasi }}
+                </small>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class=" mt-20 mb-10">
+        <h1 class=" fw-bold" style="font-family: 'Lobster', cursive;">
+          Konser Yang Tersedia
+        </h1>
+        <p class="text-muted">Konser yang sedang tersedia untuk dibeli!</p>
+      </div>
+
+      <div class="row ms-2">
+        <div v-if="availableConcerts.length === 0" class="text-center">
+          <p>Tidak ada konser tersedia saat ini.</p>
+        </div>
+        <div v-for="event in availableConcerts" :key="event.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+          <div class="card concert-card" @click="goToEventDetail(event.uuid)">
+            <div class="card-img-wrapper">
+              <img :src="`${event.image}`" class="card-img-top" alt="Event Image">
+              <div class="available-badge">Tersedia</div>
             </div>
             <div class="card-body">
               <h5 class="card-title">{{ event.title }}</h5>
@@ -317,7 +438,7 @@ const debouncedSearch = debounce(searchKonser, 300);
                 </small>
               </p>
               <div class="d-flex justify-content-between align-items-center">
-                <p class="card-text mb-0"> {{ event.harga_regular }}</p>
+                <p class="card-text mb-0"> {{ event.harga }}</p>
                 <a @click.stop="goToEventDetail(event.uuid)" class="btn btn-primary btn-sm">
                   Tickets <i class="fa-solid fa-ticket ms-1"></i>
                 </a>
@@ -327,19 +448,21 @@ const debouncedSearch = debounce(searchKonser, 300);
         </div>
       </div>
     </div>
-    <div class="container">
-      <div class=" mt-20 mb-10">
-        <h1 class=" fw-bold" style="font-family: 'Lobster', cursive;">
+
+    <!-- Modify the Semua Konser section -->
+    <div id="semua-konser" class="container">
+      <div class="mt-20 mb-10">
+        <h1 class="fw-bold" style="font-family: 'Lobster', cursive;">
           Semua Konser
         </h1>
         <p class="text-muted">Jelajahi berbagai pilihan konser menarik di berbagai kota!</p>
       </div>
 
-      <div class="row mt-15 ">
+      <div class="row mt-15">
         <div v-if="filteredKonser.length === 0" class="text-center">
-          <p>No concerts available at the moment.</p>
+          <p>Tidak ada konser yang tersedia saat ini.</p>
         </div>
-        <div v-for="event in filteredKonser" :key="event.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+        <div v-for="event in displayedKonser" :key="event.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
           <div class="card concert-card" @click="goToEventDetail(event.uuid)">
             <div class="card-img-wrapper">
               <img :src="`${event.image}`" class="card-img-top" alt="Event Image">
@@ -365,6 +488,14 @@ const debouncedSearch = debounce(searchKonser, 300);
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Show More/Less Button -->
+      <div v-if="filteredKonser.length > initialDisplayCount" class="text-center mt-4 mb-4">
+        <button @click="toggleShowMore" class="btn btn-outline-primary">
+          {{ showAll ? 'Show Less' : 'Show More' }}
+          <i :class="showAll ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="ms-2"></i>
+        </button>
       </div>
     </div>
 
@@ -743,5 +874,53 @@ html {
 .btn-secondary:hover {
   transform: scale(1.1);
   background-color: #0069d9;
+}
+
+.upcoming-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #ffc107;
+  color: #000;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  z-index: 10;
+  animation: pulse 2s infinite;
+}
+
+.available-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #28a745;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  z-index: 10;
+}
+
+/* Add smooth transition for cards */
+.row > div {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Optional: Add animation for new cards */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.row > div:nth-child(n+13) {
+  animation: fadeIn 0.5s ease-in-out;
 }
 </style>

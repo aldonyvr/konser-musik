@@ -16,7 +16,7 @@ class ScannerController extends Controller
             ]);
 
             $ticket = DataPemesanan::where('uuid', $request->ticket_uuid)
-                ->with(['tiket.konsers'])
+                ->with(['tiket.konser'])
                 ->first();
 
             if (!$ticket) {
@@ -58,9 +58,9 @@ class ScannerController extends Controller
                 'scan_time' => now()->format('d M Y H:i:s'),
                 'data' => [
                     'ticket_holder' => $ticket->nama_pemesan,
-                    'event_name' => $ticket->tiket->konsers->title,
+                    'event_name' => $ticket->tiket->konser->title,
                     'ticket_type' => $ticket->gate_type,
-                    'event_date' => $ticket->tiket->konsers->tanggal,
+                    'event_date' => $ticket->tiket->konser->tanggal,
                     'gate' => $ticket->gate_type
                 ]
             ]);

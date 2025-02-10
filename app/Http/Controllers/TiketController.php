@@ -26,10 +26,13 @@ class TiketController extends Controller
         $page = $request->page ? $request->page - 1 : 0;
 
         DB::statement('set @no=0+' . $page * $per);
-        $data = Tiket::with('konsers')->when($request->search, function (Builder $query, string $search) {
-            $query->where('title', 'like', "%$search%")
-                ->orWhere('full_name', 'like', "%$search%");
+        // Change 'konsers' to 'konser' in the relationship name
+        $data = Tiket::with('konser')->when($request->search, function (Builder $query, string $search) {
+            $query->whereHas('konser', function($q) use ($search) {
+                $q->where('title', 'like', "%$search%");
+            });
         })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
+        
         return response()->json($data);
     }
 
@@ -65,14 +68,14 @@ class TiketController extends Controller
     public function edit($uuid)
     {
         try {
-            // Load tiket with konser relationship
-            $tiket = Tiket::with(['konsers' => function($query) {
+            // Changed konsers to konser in the relationship name
+            $tiket = Tiket::with(['konser' => function($query) {
                 $query->select('id', 'title', 'deskripsi', 'lokasi', 'tanggal', 'image', 'tiket_tersedia');
             }])
             ->where('uuid', $uuid)
             ->firstOrFail();
 
-            // Format the response data
+            // Update response data structure
             $responseData = [
                 'id' => $tiket->id,
                 'uuid' => $tiket->uuid,
@@ -85,14 +88,14 @@ class TiketController extends Controller
                 'gate_a_capacity' => $tiket->gate_a_capacity,
                 'gate_b_capacity' => $tiket->gate_b_capacity,
                 'gate_c_capacity' => $tiket->gate_c_capacity,
-                'konser' => $tiket->konsers ? [
-                    'id' => $tiket->konsers->id,
-                    'title' => $tiket->konsers->title,
-                    'deskripsi' => $tiket->konsers->deskripsi,
-                    'lokasi' => $tiket->konsers->lokasi,
-                    'tanggal' => $tiket->konsers->tanggal,
-                    'tiket_tersedia' => $tiket->konsers->tiket_tersedia,
-                    'image' => $tiket->konsers->image,
+                'konser' => $tiket->konser ? [  // Changed from konsers to konser
+                    'id' => $tiket->konser->id,
+                    'title' => $tiket->konser->title,
+                    'deskripsi' => $tiket->konser->deskripsi,
+                    'lokasi' => $tiket->konser->lokasi,
+                    'tanggal' => $tiket->konser->tanggal,
+                    'tiket_tersedia' => $tiket->konser->tiket_tersedia,
+                    'image' => $tiket->konser->image,
                 ] : null
             ];
 

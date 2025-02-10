@@ -15,7 +15,7 @@ const ticketDetails = ref<any>(null);
 const showLoginModal = ref(false);
 const showBookingForm = ref(false);
 const vip = ref(0);
-const MAX_TOTAL_TICKETS = 10;
+const MAX_TOTAL_TICKETS = 5;
 const isSubmitting = ref(false);
 const totalTickets = computed(() => reguler.value + vip.value);
 
@@ -366,7 +366,11 @@ onMounted(() => {
                                 </div>
 
                                 <div class="ticket-type-selection mb-4">
-                                    <div class="ticket-options">
+                                    <div class="me-20">
+                                    <div class="me-20">
+                                    <div class="me-20">
+                                    
+                                    <div class="ticket-options me-20">
                                         <template v-if="gates.length > 0">
                                             <div v-for="gate in gates" :key="gate.id" class="ticket-option">
                                                 <div class="ticket-type-header">
@@ -429,6 +433,9 @@ onMounted(() => {
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                </div>
+                                </div>
                                 </div>
 
                                 <div class="total-price">
@@ -761,18 +768,11 @@ hr {
     opacity: 0.15;
 }
 
-.ticket-options {
-    display: flex;
-    gap: 1.5rem;
-    flex-wrap: wrap;
-}
-
 .ticket-option {
-    flex: 1;
-    min-width: 480px;
     border: 1px solid #cbcaca;
     border-radius: 12px;
-    padding: 1.5rem;
+    width: 180%;
+    margin-bottom: 5%;
     cursor: pointer;
     position: relative;
     transition: all 0.3s ease;
@@ -837,12 +837,6 @@ hr {
     border-bottom: 2px solid #eee;
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
-}
-
-.ticket-options {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
 }
 
 .ticket-option {

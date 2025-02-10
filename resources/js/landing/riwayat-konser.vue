@@ -10,8 +10,31 @@ import html2canvas from 'html2canvas';
 import { currency } from "@/libs/utils"; // Add this import
 import QRCode from 'qrcode';
 
-const activeTickets = computed(() => tickets.value.filter(ticket => ticket.status === 'active'));
-const completedHistory = computed(() => purchaseHistory.value.filter(history => history.status === 'Selesai'));
+const isTicketExpired = (date: string) => {
+    if (!date) return false;
+    const concertDate = new Date(date);
+    const today = new Date();
+    return concertDate < today;
+};
+
+// Only show active and non-expired tickets in Tiket Anda
+const activeTickets = computed(() => 
+    tickets.value.filter(ticket => 
+        ticket.status === 'active' && 
+        !isTicketExpired(ticket.date) &&
+        !ticket.used
+    )
+);
+
+// Show all expired or used tickets in history
+const historyTickets = computed(() => 
+    tickets.value.filter(ticket => 
+        isTicketExpired(ticket.date) || 
+        ticket.status === 'used' ||
+        ticket.used
+    )
+);
+
 const route = useRoute();
 const activeTab = ref('tickets');
 const ticketRefs = ref<any>([]);
@@ -21,15 +44,31 @@ const isLoading = ref(true);
 
 const generateBarcodeImage = async (code: string) => {
     try {
-        const canvas = await bwipjs.toCanvas('', {
-            bcid: 'code128',       // Barcode type
-            text: code,            // Text to encode
-            scale: 3,              // Scale factor
-            height: 10,            // Bar height, in millimeters
-            includetext: true,     // Show human-readable text
-            textxalign: 'center',  // Center the text
+        // Create a temporary canvas element with a unique ID
+        const tempCanvasId = `barcode-${Math.random().toString(36).substr(2, 9)}`;
+        const canvas = document.createElement('canvas');
+        canvas.id = tempCanvasId;
+        // Hide the canvas but keep it in DOM temporarily
+        canvas.style.display = 'none';
+        document.body.appendChild(canvas);
+
+        // Generate barcode
+        const barcodeCanvas = await bwipjs.toCanvas(tempCanvasId, {
+            bcid: 'code128',
+            text: code,
+            scale: 3,
+            height: 10,
+            includetext: true,
+            textxalign: 'center',
         });
-        return canvas.toDataURL('image/png');
+
+        // Get the data URL
+        const dataUrl = barcodeCanvas.toDataURL('image/png');
+
+        // Clean up - remove temporary canvas
+        document.body.removeChild(canvas);
+
+        return dataUrl;
     } catch (error) {
         console.error('Error generating barcode:', error);
         return '';
@@ -55,22 +94,29 @@ const generateQRCode = async (uuid: string) => {
 const fetchPurchasedTickets = async () => {
     try {
         const response = await axios.get('datapemesan/purchased-tickets'); // Use your authenticated axios instance
-        tickets.value = await Promise.all(response.data.map(async ticket => ({
-            id: ticket.id,
-            name: ticket.tiket?.konsers?.title || '',
-            date: ticket.tiket?.konsers?.tanggal || '',
-            time: ticket.tiket?.opengate || '',
-            location: ticket.tiket?.konsers?.lokasi || '',
-            seat: ticket.gate_type === 'VIP' ? 'VIP-' + ticket.id : null,
-            row: ticket.gate_type === 'VIP' ? String.fromCharCode(65 + (ticket.id % 26)) : null,
-            price: currency(ticket.total_harga),
-            barcodeImage: await generateBarcodeImage(ticket.uuid), // Generate barcode image
-            qrcode: await generateQRCode(ticket.uuid),
-            status: ticket.status_pembayaran === 'Successfully' ? 'active' : 'pending',
-            image: ticket.tiket.konsers?.image || '',
-            gate: ticket.gate_type || 'VIP',
-            organizer: 'Event Organizer'
-        })));
+        tickets.value = await Promise.all(response.data.map(async ticket => {
+            const ticketDate = ticket.tiket?.konser?.tanggal || '';
+            const isExpired = isTicketExpired(ticketDate);
+            
+            return {
+                id: ticket.id,
+                name: ticket.tiket?.konser?.title || '',
+                date: ticketDate,
+                time: ticket.tiket?.opengate || '',
+                location: ticket.tiket?.konser?.lokasi || '',
+                seat: ticket.gate_type === 'VIP' ? 'VIP-' + ticket.id : null,
+                row: ticket.gate_type === 'VIP' ? String.fromCharCode(65 + (ticket.id % 26)) : null,
+                price: currency(ticket.total_harga),
+                barcodeImage: await generateBarcodeImage(ticket.uuid), // Generate barcode image
+                qrcode: await generateQRCode(ticket.uuid),
+                status: isExpired ? 'expired' : ticket.status_pembayaran === 'Successfully' ? 'active' : 'pending',
+                image: ticket.tiket?.konser?.image || '',
+                gate: ticket.gate_type || 'VIP',
+                organizer: 'Event Organizer',
+                used: ticket.is_used || false,
+                isExpired: isExpired
+            };
+        }));
     } catch (error) {
         console.error('Error fetching tickets:', error);
     } finally {
@@ -159,9 +205,9 @@ const generateBarcode = (data: string) => {
                 </div>
             </div>
             
-            <!-- Tickets List -->
-            <div v-else-if="tickets.length > 0" class="tickets-wrapper">
-                <div v-for="ticket in tickets" :key="ticket.id" class="mb-8">
+            <!-- Active Tickets List -->
+            <div v-else-if="activeTickets.length > 0" class="tickets-wrapper">
+                <div v-for="ticket in activeTickets" :key="ticket.id" class="mb-8">
                     <!-- Downloadable Ticket -->
                     <div :id="`ticket-${ticket.id}`" class="ticket-full">
                         <!-- Left Section -->
@@ -231,9 +277,9 @@ const generateBarcode = (data: string) => {
                 </div>
             </div>
 
-            <!-- No Tickets Message -->
+            <!-- No Active Tickets Message -->
             <div v-else class="text-center text-muted mt-5">
-                <p class="lead">Anda belum memiliki tiket konser.</p>
+                <p class="lead">Anda tidak memiliki tiket konser yang aktif.</p>
             </div>
         </div>
 
@@ -244,37 +290,39 @@ const generateBarcode = (data: string) => {
             </div>
 
             <!-- No History Message -->
-            <div v-if="purchaseHistory.length === 0" class="text-center text-muted mt-5">
+            <div v-if="historyTickets.length === 0" class="text-center text-muted mt-5">
                 <p class="lead">Tidak ada riwayat pembelian tiket konser ditemukan.</p>
             </div>
 
             <!-- History List -->
             <div v-else class="row mt-15 mb-20">
-                <div v-for="purchase in purchaseHistory" :key="purchase.id" class="col-md-6 mb-7">
+                <div v-for="ticket in historyTickets" :key="ticket.id" class="col-md-6 mb-7">
                     <div class="card shadow-lg hover-shadow">
                         <div class="row g-0">
                             <div class="col-md-4">
-                                <img :src="purchase.image" class="img-fluid rounded-start align-items-center"
+                                <img :src="ticket.image" class="img-fluid rounded-start align-items-center"
                                     alt="Concert Image">
                             </div>
                             <div class="col-md-8">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between">
                                         <h5 class="card-title">Pembelian</h5>
-                                        <span class="badge bg-success text-light align-self-center">{{ purchase.status
-                                            }}</span>
+                                        <span class="badge" 
+                                              :class="ticket.used ? 'bg-secondary' : 'bg-success'">
+                                            {{ ticket.used ? 'Telah Digunakan' : 'Selesai' }}
+                                        </span>
                                     </div>
                                     <hr>
-                                    <h5 class="text-primary">Tiket {{ purchase.name }}</h5>
+                                    <h5 class="text-primary">{{ ticket.name }}</h5>
                                     <p class="card-text">
                                         <i class="fa-solid fa-calendar-day text-danger me-2"></i>
-                                        Masa berlaku {{ purchase.date }} sampai {{ purchase.date }}
+                                        {{ ticket.date }}
                                     </p>
                                     <p class="card-text">
                                         <i class="fa-solid fa-location-dot text-success me-2"></i>
-                                        {{ purchase.location }}
+                                        {{ ticket.location }}
                                     </p>
-                                    <p class="fw-bold">Total Pembayaran: {{ purchase.price }}</p>
+                                    <p class="fw-bold">Total Pembayaran: {{ ticket.price }}</p>
                                 </div>
                             </div>
                         </div>
@@ -430,5 +478,18 @@ const generateBarcode = (data: string) => {
         border-left: none;
         border-top: 2px dashed #dee2e6;
     }
+}
+
+.badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.bg-secondary {
+    background-color: #6c757d;
+}
+
+.bg-danger {
+    background-color: #dc3545;
 }
 </style>

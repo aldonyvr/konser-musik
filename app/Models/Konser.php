@@ -25,10 +25,8 @@ class Konser extends Model
         'kontak'
     ];
 
-    public function tiket () {
-        return $this->hasMany(Tiket::class);
-    }
-    public function lokasi () {
-        return $this->hasMany(Lokasi::class);
+    public function tiket()
+    {
+        return $this->hasOne(Tiket::class, 'konsers_id');
     }
 };

@@ -2,118 +2,298 @@
 import KTHeader from "@/layouts/default-layout/components/header/NavbarLanding.vue";
 import Footer from "@/Layouts/default-layout/components/footer/Footer.vue";
 
-// const steps = [
-//   {
-//     number: 1,
-//     title: "Cari Konser Favorit Anda",
-//     description: "Jelajahi daftar konser musik yang tersedia di website kami.",
-//     icon: "🎵",
-//   },
-//   {
-//     number: 2,
-//     title: "Pilih Tiket yang Sesuai",
-//     description: "Pilih jenis tiket sesuai kebutuhan Anda, mulai dari reguler hingga VIP.",
-//     icon: "🎫",
-//   },
-//   {
-//     number: 3,
-//     title: "Isi Data Pemesanan",
-//     description: "Masukkan informasi Anda untuk memastikan tiket terkonfirmasi.",
-//     icon: "📝",
-//   },
-//   {
-//     number: 4,
-//     title: "Lakukan Pembayaran",
-//     description: "Bayar tiket Anda dengan metode pembayaran yang tersedia.",
-//     icon: "💳",
-//   },
-//   {
-//     number: 5,
-//     title: "Nikmati Konsernya!",
-//     description: "Bawa tiket Anda dan bersiaplah untuk pengalaman musik yang luar biasa.",
-//     icon: "🎉",
-//   },
-// ];
+const registrationSteps = [
+  {
+    number: "01",
+    title: "Buat Akun",
+    description: "Daftar dan verifikasi email Anda untuk mulai menjelajahi konser.",
+    icon: "fas fa-user-plus",
+    color: "primary"
+  },
+  {
+    number: "02",
+    title: "Pilih Konser",
+    description: "Temukan konser favorit Anda dari berbagai genre musik.",
+    icon: "fas fa-music",
+    color: "success"
+  },
+  {
+    number: "03",
+    title: "Pilih Tiket",
+    description: "Pilih kategori tiket dan lokasi duduk yang Anda inginkan.",
+    icon: "fas fa-ticket-alt",
+    color: "info"
+  },
+  {
+    number: "04",
+    title: "Pembayaran",
+    description: "Lakukan pembayaran melalui berbagai metode yang tersedia.",
+    icon: "fas fa-credit-card",
+    color: "warning"
+  }
+];
+
+const features = [
+  {
+    icon: "fas fa-bolt",
+    title: "Booking Instan",
+    description: "Proses pemesanan tiket yang cepat dan mudah"
+  },
+  {
+    icon: "fas fa-shield-alt",
+    title: "Pembayaran Aman",
+    description: "Transaksi dijamin aman dan terpercaya"
+  },
+  {
+    icon: "fas fa-hand-holding-heart",
+    title: "Pengalaman Premium",
+    description: "Layanan pelanggan 24/7 dan fitur eksklusif"
+  }
+];
 </script>
 
 <template>
-  <div class="min-h-screen">
-    <!-- Header -->
-    <nav class="">
-      <KTHeader />
-    </nav>
-
+  <div class="blog-page">
+    <KTHeader />
+    
     <!-- Hero Section -->
-    <div class="py-10"></div>
-    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center">
-      <h1 class="text-5xl font-bold mt-20">Selamat Datang di Dunia Musik!</h1>
-      <p class="mt-4 text-xl ">
-        Nikmati pengalaman konser terbaik dengan pemesanan tiket yang mudah dan cepat.
-      </p>
-    </div>
-
-    <div class="bg-gray-50 px-4">
-      <div class="container mx-auto text-center">
-        <p class="text-lg text-gray-600 leading-relaxed">
-          Musik bukan hanya tentang melodi dan lirik, tetapi juga tentang cerita yang
-          menghubungkan kita semua. Dalam setiap konser, ada ribuan jiwa yang datang
-          bersama untuk merayakan cinta terhadap musik. Pemesanan tiket hanyalah langkah pertama
-          untuk menjadi bagian dari momen magis ini. Bayangkan berdiri di tengah kerumunan,
-          dikelilingi oleh lampu-lampu yang berkilauan, dan merasakan getaran bass di dada Anda.
-        </p>
-        <p class="mt-6 text-lg text-gray-600 leading-relaxed">
-          Selamat datang di dunia di mana musik adalah bahasa universal. Tidak peduli siapa Anda
-          atau dari mana Anda berasal, konser musik selalu memiliki tempat untuk Anda.
-          Ayo, pesan tiket Anda hari ini, dan mari kita ciptakan kenangan yang tak terlupakan!
-        </p>
+    <section class="hero-section">
+      <div class="hero-content">
+        <h1>MusicOnStage</h1>
+        <p>Temukan Berita Terbaru & Tips Seputar Konser</p>
       </div>
-    </div>
+    </section>
 
-    <!-- Steps Section -->
-    <div class="container mx-auto mb-20 px-4 mt-15">
-      <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">
-        Langkah-Langkah Memesan Tiket Konser
-      </h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 bg-gray-100">
-        <div
-          v-for="step in steps"
-          :key="step.number"
-          class="shadow-lg rounded-lg p-6 text-center hover:shadow-xl transition-shadow duration-300"
-        >
-          <div class="text-5xl mb-4 text-indigo-600">{{ step.icon }}</div>
-          <h3 class="text-xl font-semibold text-gray-800">
-            {{ step.number }}. {{ step.title }}
-          </h3>
-          <p class="mt-2 text-gray-600">{{ step.description }}</p>
+    <!-- Registration Guide Section -->
+    <section class="registration-section">
+      <div class="container">
+        <h2 class="section-title text-center">Cara Pemesanan Tiket</h2>
+        <div class="steps-container">
+          <div v-for="step in registrationSteps" :key="step.number" class="step-card">
+            <div class="step-number" :class="`bg-${step.color}`">{{ step.number }}</div>
+            <div class="step-icon">
+              <i :class="step.icon"></i>
+            </div>
+            <h3>{{ step.title }}</h3>
+            <p>{{ step.description }}</p>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Story Section -->
+    <!-- Features Section -->
+    <section class="features-section">
+      <div class="container">
+        <h2 class="section-title text-center">Keunggulan Kami</h2>
+        <div class="features-grid">
+          <div v-for="feature in features" :key="feature.title" class="feature-card">
+            <i :class="feature.icon"></i>
+            <h3>{{ feature.title }}</h3>
+            <p>{{ feature.description }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white">
-      <Footer />
-    </footer>
+    <Footer />
   </div>
 </template>
 
 <style scoped>
 
-.container {
-  max-width: 1000px; /* Lebar maksimal untuk tampilan yang lebih minimalis */
+.hero-section {
+  height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  margin-top: 64px;
 }
 
-h2 {
-  font-size: 1.5rem; /* Ukuran font lebih kecil untuk kesan minimalis */
+.hero-content h1 {
+  font-size: 4rem;
+  font-weight: 700;
+  animation: fadeInUp 1.5s ease;
 }
 
-.grid div {
-  padding: 1rem; /* Padding lebih kecil untuk tata letak bersih */
+.hero-content p {
+  font-size: 1.5rem;
+  animation: fadeInUp 1s ease 0.3s;
+  opacity: 0;
+  animation-fill-mode: forwards;
 }
 
-.grid div:hover {
-  border-color: #6366f1; /* Ubah warna border saat hover untuk efek visual halus */
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 500;
+  margin-bottom: 3rem;
+  position: relative;
+  padding-bottom: 1rem;
 }
 
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 4px;
+  background: #007bff;
+}
+
+.news-section {
+  padding: 5rem 0;
+}
+
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.news-card {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.news-card:hover {
+  transform: translateY(-10px);
+}
+
+.news-image {
+  position: relative;
+  height: 200px;
+}
+
+.news-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.category-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #007bff;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+.news-content {
+  padding: 1.5rem;
+}
+
+.news-date {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.read-more {
+  background: none;
+  border: 2px solid #007bff;
+  color: #007bff;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.read-more:hover {
+  background: #007bff;
+}
+
+.registration-section {
+  padding: 1rem 0;
+}
+
+.steps-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.step-card {
+  text-align: center;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.step-number {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.step-icon {
+  font-size: 2.5rem;
+  color: #007bff;
+  margin-bottom: 1rem;
+}
+
+.features-section {
+  padding: 5rem 0;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.feature-card {
+  text-align: center;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-10px);
+}
+
+.feature-card i {
+  font-size: 3rem;
+  color: #007bff;
+  margin-bottom: 1rem;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-content h1 {
+    font-size: 2.5rem;
+  }
+  
+  .hero-content p {
+    font-size: 1.2rem;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+}
 </style>

@@ -139,6 +139,62 @@ Band ini dikenal dengan suara lembut dan lirik-lirik yang penuh emosi, menjadika
 
 Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan suasana nyaman bagi semua penonton. Dengan kapasitas terbatas 150 tiket, pastikan Anda tidak melewatkan kesempatan untuk menikmati malam magis bersama Cigarettes After Sex.',
         ]);
+        Konser::create([
+            'title' => 'HIVI!',
+            'tanggal' => '2024-12-14',
+            'lokasi' => 'JAKARTA',
+            'jam' => '20.00',
+            'tiket_tersedia' => '150',
+            'image' => '/media/musik/cas.png',
+            // 'kontak' => '086723467236',
+            'deskripsi' => 'Nikmati malam penuh atmosfer melankolis dan romantis bersama Cigarettes After Sex, band dream pop asal Amerika yang telah memikat hati banyak penggemar di seluruh dunia. Konser ini akan berlangsung di Jakarta pada 14  50.000.
+
+Band ini dikenal dengan suara lembut dan lirik-lirik yang penuh emosi, menjadikan setiap lagu mereka seperti puisi yang dinyanyikan. Dalam konser ini, mereka akan membawakan hits seperti "Nothing’s Gonna Hurt You Baby", "K.", dan "Apocalypse". Dengan tata suara berkualitas tinggi dan pencahayaan yang menenangkan, pengalaman mendengarkan musik mereka akan terasa begitu intim dan tak terlupakan.
+
+Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan suasana nyaman bagi semua penonton. Dengan kapasitas terbatas 150 tiket, pastikan Anda tidak melewatkan kesempatan untuk menikmati malam magis bersama Cigarettes After Sex.',
+        ]);
+        Konser::create([
+            'title' => 'Dewa 19',
+            'tanggal' => '2024-12-14',
+            'lokasi' => 'JAKARTA',
+            'jam' => '20.00',
+            'tiket_tersedia' => '150',
+            'image' => '/media/musik/cas.png',
+            // 'kontak' => '086723467236',
+            'deskripsi' => 'Nikmati malam penuh atmosfer melankolis dan romantis bersama Cigarettes After Sex, band dream pop asal Amerika yang telah memikat hati banyak penggemar di seluruh dunia. Konser ini akan berlangsung di Jakarta pada 14  50.000.
+
+Band ini dikenal dengan suara lembut dan lirik-lirik yang penuh emosi, menjadikan setiap lagu mereka seperti puisi yang dinyanyikan. Dalam konser ini, mereka akan membawakan hits seperti "Nothing’s Gonna Hurt You Baby", "K.", dan "Apocalypse". Dengan tata suara berkualitas tinggi dan pencahayaan yang menenangkan, pengalaman mendengarkan musik mereka akan terasa begitu intim dan tak terlupakan.
+
+Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan suasana nyaman bagi semua penonton. Dengan kapasitas terbatas 150 tiket, pastikan Anda tidak melewatkan kesempatan untuk menikmati malam magis bersama Cigarettes After Sex.',
+        ]);
+        Konser::create([
+            'title' => 'The Beatles!',
+            'tanggal' => '2025-12-14',
+            'lokasi' => 'JAKARTA',
+            'jam' => '20.00',
+            'tiket_tersedia' => '150',
+            'image' => '/media/musik/cas.png',
+            // 'kontak' => '086723467236',
+            'deskripsi' => 'Nikmati malam penuh atmosfer melankolis dan romantis bersama Cigarettes After Sex, band dream pop asal Amerika yang telah memikat hati banyak penggemar di seluruh dunia. Konser ini akan berlangsung di Jakarta pada 14  50.000.
+
+Band ini dikenal dengan suara lembut dan lirik-lirik yang penuh emosi, menjadikan setiap lagu mereka seperti puisi yang dinyanyikan. Dalam konser ini, mereka akan membawakan hits seperti "Nothing’s Gonna Hurt You Baby", "K.", dan "Apocalypse". Dengan tata suara berkualitas tinggi dan pencahayaan yang menenangkan, pengalaman mendengarkan musik mereka akan terasa begitu intim dan tak terlupakan.
+
+Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan suasana nyaman bagi semua penonton. Dengan kapasitas terbatas 150 tiket, pastikan Anda tidak melewatkan kesempatan untuk menikmati malam magis bersama Cigarettes After Sex.',
+        ]);
+        Konser::create([
+            'title' => 'Nirvana!',
+            'tanggal' => '2025-12-14',
+            'lokasi' => 'JAKARTA',
+            'jam' => '20.00',
+            'tiket_tersedia' => '150',
+            'image' => '/media/musik/cas.png',
+            // 'kontak' => '086723467236',
+            'deskripsi' => 'Nikmati malam penuh atmosfer melankolis dan romantis bersama Cigarettes After Sex, band dream pop asal Amerika yang telah memikat hati banyak penggemar di seluruh dunia. Konser ini akan berlangsung di Jakarta pada 14  50.000.
+
+Band ini dikenal dengan suara lembut dan lirik-lirik yang penuh emosi, menjadikan setiap lagu mereka seperti puisi yang dinyanyikan. Dalam konser ini, mereka akan membawakan hits seperti "Nothing’s Gonna Hurt You Baby", "K.", dan "Apocalypse". Dengan tata suara berkualitas tinggi dan pencahayaan yang menenangkan, pengalaman mendengarkan musik mereka akan terasa begitu intim dan tak terlupakan.
+
+Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan suasana nyaman bagi semua penonton. Dengan kapasitas terbatas 150 tiket, pastikan Anda tidak melewatkan kesempatan untuk menikmati malam magis bersama Cigarettes After Sex.',
+        ]);
 
     }
 }

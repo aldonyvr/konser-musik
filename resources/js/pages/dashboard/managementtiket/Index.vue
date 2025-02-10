@@ -19,7 +19,7 @@ const columns = [
     column.accessor("no", {
         header: "No",
     }),
-    column.accessor("konsers.title", {
+    column.accessor("konser.title", {  // Change from konsers.title to konser.title
         header: "Title",
     }),
     // column.accessor("konsers.harga", {

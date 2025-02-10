@@ -17,16 +17,16 @@
             <h3>Navigation</h3>
             <ul>
               <li><a href="/">Home</a></li>
-              <li><a href="/KonserSaya">Konser Saya</a></li>
-              <li><a href="/RiwayatTransaksi">Riwayat Transaksi</a></li>
-              <li><a href="/Kontak">Kontak</a></li>
+              <li><a href="/blog">About me</a></li>
+              <li><a href="/riwayat-konser">Ticket</a></li>
+              <li><a href="/kontak">Contact Us</a></li>
             </ul>
           </div>
           <div class="footer-section text-white contact-info">
             <h3>Informasi Kontak</h3>
             <p><i class="fa-solid fa-phone"></i> +62 812-3083-9195</p>
-            <p><i class="fa-solid fa-envelope"></i> aldonyvr@gmail.com</p>
-            <p><i class="fa-solid fa-map-marker-alt"></i> Jl. Klakah Rejo Gg.8 No.5 </p>
+            <p><i class="fa-solid fa-envelope"></i> admkonser2025@gmail.com</p>
+            <p><i class="fa-solid fa-map-marker-alt"></i> Jl. Surabaya  </p>
           </div>
           <div class="footer-section text-white">
             <h3>Daftar Konser Anda</h3>
@@ -40,15 +40,18 @@
           </div>
         </div>
         <div class="footer-bottom text-white">
-          <p>Copyright © 2024 All rights reserved | Block is made with ❤️ by Mudassar Chaudhry</p>
+          <p class="copyright-text">
+            © 2024 MusicOnStage | Menyajikan Momen Musik Yang Tak Terlupakan <i class="fas fa-music text-warning"></i>
+            <!-- <span class="love-text">Dibuat dengan  untuk pencinta musik</span> -->
+          </p>
           <div class="social-links">
             <!-- <a href="https://wa.me/6285198362591" target="_blank" aria-label="WhatsApp" class="">
               <i class="fab fa-whatsapp text-2xl text-green-500 " ></i>
             </a> -->
             
-            <a href="https://wa.me/6285198362591" aria-label="WhatsApp">
-              <img src="/media/musik/whatsapp.png" alt="WhatsApp" style="height: 28px; width: 29px;" />
-            </a>
+            <!-- <a href="https://wa.me/6285198362591" aria-label="WhatsApp">
+              <i class="fab fa-whatsapp" style="font-size: 30px; color: #32CD32;"></i> 
+            </a> -->
             <a href="#" aria-label="Facebook">
               <img src="/media/musik/facebook.png" alt="Facebook" style="height: 30px; width: 31px;" />
             </a>
@@ -61,9 +64,9 @@
             <a href="#" aria-label="LinkedIn">
               <img src="/media/musik/linkedin.png" alt="LinkedIn" style="height: 27px; width: 29px;"/>
             </a>
-            <a href="https://youtube.com/@gkimanukan?si=CgU5-YpuDYOnGz5u" aria-label="YouTube">
+            <!-- <a href="https://youtube.com/@gkimanukan?si=CgU5-YpuDYOnGz5u" aria-label="YouTube">
               <img src="/media/musik/youtube.png" alt="YouTube" style="height: 27px; width: 36px;"/>
-            </a>
+            </a> -->
           </div>
         </div>
       </footer>
@@ -160,5 +163,28 @@
 .large-text {
     display: block; /* Menempatkan 'Stage' di baris baru */
     font-size: 130%; /* Ukuran font lebih besar */
+}
+
+.copyright-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.love-text {
+  display: block;
+  font-size: 0.85rem;
+  margin-top: 5px;
+  color: #ffcc00;
+}
+
+.love-text i {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 </style>
