@@ -436,7 +436,7 @@ onMounted(() => {
                         <tr v-else v-for="(item, index) in paginatedData" :key="item.uuid">
                             <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
                             <td>{{ item.nama_pemesan }}</td>
-                            <td>{{ item.tiket?.konsers?.title || 'N/A' }}</td>
+                            <td>{{ item.tiket?.konser?.title || 'N/A' }}</td>
                             <td>{{ item.email_pemesan }}</td>
                             <td>{{ item.telepon_pemesan }}</td>
                             <td>{{ item.alamat_pemesan }}</td>

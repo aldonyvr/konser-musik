@@ -26,7 +26,6 @@ class KonserRequest extends FormRequest
             'tanggal' => 'required|date',
             'jam' => 'required',
             'lokasi' => 'required|string|max:255',
-            'tiket_tersedia' => 'required|integer|min:0',
             'kontak' => 'nullable|string|max:255',
             'deskripsi' => 'required|string',
             'harga' => 'required|numeric|min:0',

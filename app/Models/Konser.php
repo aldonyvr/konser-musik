@@ -19,7 +19,6 @@ class Konser extends Model
         'jam',
         'nama_sosmed',
         'lokasi',
-        'tiket_tersedia',
         'image',
         'deskripsi',
         'kontak'

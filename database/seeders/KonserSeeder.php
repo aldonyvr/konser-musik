@@ -16,7 +16,6 @@ class KonserSeeder extends Seeder
             'tanggal' => '2025-12-14',
             'lokasi' => 'YOGYAKARTA',
             'jam' => '10.00',
-            'tiket_tersedia' => '150',
             'image' => '/media/musik/ardhito.png',
             // 'kontak' => '0821173612731',
             'deskripsi' => 'Ardhito Pramono Live in Yogyakarta
@@ -36,7 +35,6 @@ Jangan lewatkan kesempatan langka untuk menyaksikan secara langsung salah satu m
             'title' => 'Hindia Music Festival',
             'tanggal' => '2024-11-24',
             'lokasi' => 'SURABAYA',
-            'tiket_tersedia' => '150',
             'jam' => '19.00',
             'image' => '/media/musik/baskara.png',
             // 'kontak' => '0821173612731',
@@ -54,7 +52,6 @@ Dengan kapasitas terbatas 150 tiket, jangan lewatkan kesempatan untuk menjadi ba
             'title' => 'Sal Priadi',
             'tanggal' => '2024-11-29',
             'lokasi' => 'SURABAYA',
-            'tiket_tersedia' => '150',
             'jam' => '20.00 ',
             'image' => '/media/musik/sal priadi.png',
             // 'kontak' => '081234273171',
@@ -69,7 +66,6 @@ Selain penampilan utama, Anda juga dapat menikmati berbagai aktivitas menarik di
             'tanggal' => '2024-11-30',
             'lokasi' => 'JAKARTA',
             'jam' => '20.00 ',
-            'tiket_tersedia' => '150',
             'image' => '/media/musik/kuntoaji.png',
             // 'kontak' => '085526315261',
             'deskripsi' => 'Siapkan diri Anda untuk malam penuh magis bersama Kunto Aji, salah satu musisi terbaik di Indonesia! Konser ini akan berlangsung pada 30 November 2024 di Jakarta Rp 100.000.
@@ -83,7 +79,6 @@ Acara ini dirancang dengan konsep modern dan intim, menawarkan tata lampu yang m
             'tanggal' => '2025-03-10',
             'lokasi' => 'SURABAYA',
             'jam' => '20.00 ',
-            'tiket_tersedia' => '150',
             'image' => '/media/musik/nadin.png',
             // 'kontak' => '087327362731',
             'deskripsi' => 'Jangan lewatkan konser Nadin Amizah yang akan digelar di Surabaya pada 10 Januari 2025! Penyanyi dengan suara lembut nan penuh emosi ini siap memukau Anda dengan lagu-lagunya yang indah dan penuh makna.
@@ -100,7 +95,6 @@ Acara ini dimulai pukul 20:00 WIB dan dirancang untuk menciptakan suasana yang h
             'tanggal' => '2025-01-24',
             'lokasi' => 'JAKARTA',
             'jam' => '20.00 ',
-            'tiket_tersedia' => '150',
             'image' => '/media/musik/ldr.png',
             // 'kontak' => '08426341232',
             'deskripsi' => 'Penggemar musik di Jakarta bersiaplah untuk malam yang luar biasa bersama Lana Del Rey! Penyanyi dan penulis lagu legendaris asal Amerika ini akan menggelar konser eksklusif pada 24 Januari  65.000, ini adalah kesempatan langka untuk menikmati suara melankolis dan lirik puitis yang telah memikat dunia.
@@ -114,7 +108,6 @@ Acara dimulai pukul 20:00 WIB di lokasi eksklusif di Jakarta yang dirancang untu
             'tanggal' => '2025-02-15',
             'lokasi' => 'JAKARTA',
             'jam' => '20.00',
-            'tiket_tersedia' => '150',
             'image' => '/media/musik/the1975.png',
             // 'kontak' => '08632642731',
             'deskripsi' => 'Siapkan diri Anda untuk malam penuh energi dan kenangan bersama The 1975, salah satu band pop rock terpopuler di dunia! Konser ini akan diadakan di Jakarta pada 15 Februari , hanya Rp 50.000.
@@ -130,7 +123,6 @@ Konser dimulai pukul 20:00 WIB di lokasi yang eksklusif dan nyaman untuk penonto
             'tanggal' => '2025-12-14',
             'lokasi' => 'JAKARTA',
             'jam' => '20.00',
-            'tiket_tersedia' => '150',
             'image' => '/media/musik/cas.png',
             // 'kontak' => '086723467236',
             'deskripsi' => 'Nikmati malam penuh atmosfer melankolis dan romantis bersama Cigarettes After Sex, band dream pop asal Amerika yang telah memikat hati banyak penggemar di seluruh dunia. Konser ini akan berlangsung di Jakarta pada 14  50.000.
@@ -144,7 +136,6 @@ Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan sua
             'tanggal' => '2024-12-14',
             'lokasi' => 'JAKARTA',
             'jam' => '20.00',
-            'tiket_tersedia' => '150',
             'image' => '/media/musik/cas.png',
             // 'kontak' => '086723467236',
             'deskripsi' => 'Nikmati malam penuh atmosfer melankolis dan romantis bersama Cigarettes After Sex, band dream pop asal Amerika yang telah memikat hati banyak penggemar di seluruh dunia. Konser ini akan berlangsung di Jakarta pada 14  50.000.
@@ -158,7 +149,6 @@ Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan sua
             'tanggal' => '2024-12-14',
             'lokasi' => 'JAKARTA',
             'jam' => '20.00',
-            'tiket_tersedia' => '150',
             'image' => '/media/musik/cas.png',
             // 'kontak' => '086723467236',
             'deskripsi' => 'Nikmati malam penuh atmosfer melankolis dan romantis bersama Cigarettes After Sex, band dream pop asal Amerika yang telah memikat hati banyak penggemar di seluruh dunia. Konser ini akan berlangsung di Jakarta pada 14  50.000.
@@ -172,7 +162,6 @@ Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan sua
             'tanggal' => '2025-12-14',
             'lokasi' => 'JAKARTA',
             'jam' => '20.00',
-            'tiket_tersedia' => '150',
             'image' => '/media/musik/cas.png',
             // 'kontak' => '086723467236',
             'deskripsi' => 'Nikmati malam penuh atmosfer melankolis dan romantis bersama Cigarettes After Sex, band dream pop asal Amerika yang telah memikat hati banyak penggemar di seluruh dunia. Konser ini akan berlangsung di Jakarta pada 14  50.000.
@@ -186,7 +175,6 @@ Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan sua
             'tanggal' => '2025-12-14',
             'lokasi' => 'JAKARTA',
             'jam' => '20.00',
-            'tiket_tersedia' => '150',
             'image' => '/media/musik/cas.png',
             // 'kontak' => '086723467236',
             'deskripsi' => 'Nikmati malam penuh atmosfer melankolis dan romantis bersama Cigarettes After Sex, band dream pop asal Amerika yang telah memikat hati banyak penggemar di seluruh dunia. Konser ini akan berlangsung di Jakarta pada 14  50.000.

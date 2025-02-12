@@ -1,129 +1,186 @@
 <script setup lang="ts">
 import VueApexCharts from "vue3-apexcharts";
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import axios from "@/libs/axios";
+import { toast } from "vue3-toastify";
 
-const ticketSalesOptions = ref({
-  chart: {
-    type: 'line',
-    height: 350,
-    toolbar: {
-      show: true
-    },
-    zoom: {
-      enabled: true
-    }
-  },
-  colors: ['#4e73df', '#1cc88a'],
-  series: [{
-    name: 'Jumlah Tiket',
-    data: [450, 520, 640, 720, 850, 780]
-  }, {
-    name: 'Pendapatan (Juta Rp)',
-    data: [22.5, 26, 32, 36, 42.5, 39]
-  }],
-  xaxis: {
-    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    title: {
-      text: 'Bulan'
-    }
-  },
-  yaxis: [
-    {
-      title: {
-        text: "Jumlah Tiket"
-      }
-    },
-    {
-      opposite: true,
-      title: {
-        text: "Pendapatan (Juta Rp)"
-      }
-    }
-  ],
-  title: {
-    text: 'Trend Penjualan Tiket',
-    align: 'center'
-  },
-  stroke: {
-    curve: 'smooth',
-    width: 2
-  },
-  legend: {
-    position: 'bottom'
+// Dashboard stats
+const dashboardData = ref({
+  totalKonser: 0,
+  totalPembelian: 0,
+  totalPendapatan: 0,
+  totalUsers: 0,
+  monthlyStats: [],
+  ticketTypeStats: {
+    Regular: 0,
+    VIP: 0,
+    VVIP: 0,
+    Others: 0
   }
 });
 
-// Chart options for Concert Categories
-const concertCategoriesOptions = ref({
-  chart: {
-    type: 'bar',
-    height: 350,
-    toolbar: {
-      show: true
+const isLoading = ref(true);
+
+// Format currency
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0
+  }).format(value);
+};
+
+// Fetch dashboard data
+const fetchDashboardData = async () => {
+  try {
+    isLoading.value = true;
+
+    const [konserRes, pembelianRes, userRes] = await Promise.all([
+      axios.get('/getKonser'),
+      axios.post('/datapemesan', { // Changed to POST request
+        search: '',
+        page: 1,
+        per: 999999 // Get all records
+      }),
+      axios.get('master/users')
+    ]);
+
+    // Process konser data
+    if (Array.isArray(konserRes.data)) {
+      dashboardData.value.totalKonser = konserRes.data.length;
+    } else if (konserRes.data.data) {
+      dashboardData.value.totalKonser = konserRes.data.data.length;
+    }
+    
+    // Process pembelian data
+    const pembelianData = Array.isArray(pembelianRes.data) ? 
+      pembelianRes.data : 
+      pembelianRes.data.data || [];
+
+    // Calculate total pembelian and pendapatan
+    dashboardData.value.totalPembelian = pembelianData.filter(item => 
+      item.status_pembayaran === 'Successfully'
+    ).length;
+
+    dashboardData.value.totalPendapatan = pembelianData.reduce((total, item) => {
+      if (item.status_pembayaran === 'Successfully') {
+        return total + (parseFloat(item.total_harga) || 0);
+      }
+      return total;
+    }, 0);
+
+    // Process monthly stats for charts
+    const monthlyStats = Array(12).fill().map(() => ({ tickets: 0, revenue: 0 }));
+    pembelianData.forEach(item => {
+      if (item.status_pembayaran === 'Successfully') {
+        const date = new Date(item.tanggal_pemesan);
+        const month = date.getMonth();
+        monthlyStats[month].tickets++;
+        monthlyStats[month].revenue += parseFloat(item.total_harga) || 0;
+      }
+    });
+    dashboardData.value.monthlyStats = monthlyStats;
+
+    // Process users data
+    if (Array.isArray(userRes.data)) {
+      dashboardData.value.totalUsers = userRes.data.length;
+    } else if (userRes.data.data) {
+      dashboardData.value.totalUsers = userRes.data.data.length;
+    }
+
+    console.log('Dashboard Data:', {
+      konser: dashboardData.value.totalKonser,
+      pembelian: dashboardData.value.totalPembelian,
+      pendapatan: dashboardData.value.totalPendapatan,
+      users: dashboardData.value.totalUsers
+    });
+
+    // Update charts
+    updateCharts();
+
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    toast.error('Gagal memuat data dashboard');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Chart base configuration
+const chartBase = {
+  sales: {
+    chart: {
+      type: 'line',
+      height: 350,
+      toolbar: { show: true },
+      zoom: { enabled: true }
+    },
+    colors: ['#4e73df', '#1cc88a'],
+    xaxis: {
+      categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     }
   },
-  colors: ['#4e73df'],
-  series: [{
-    name: 'Jumlah Konser',
-    data: [12, 8, 5, 4, 3]
-  }],
-  xaxis: {
-    categories: ['Pop', 'Rock', 'Jazz', 'Classical', 'Others'],
-    title: {
-      text: 'Kategori'
-    }
+  revenue: {
+    chart: {
+      type: 'donut',
+      height: 350
+    },
+    colors: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
+    labels: ['Regular', 'VIP', 'VVIP', 'Others']
+  }
+};
+
+// Chart state
+const chartState = ref({
+  sales: {
+    ...chartBase.sales,
+    series: [{
+      name: 'Jumlah Tiket',
+      data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    }, {
+      name: 'Pendapatan (Juta)',
+      data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    }]
   },
-  yaxis: {
-    title: {
-      text: 'Jumlah Konser'
-    }
-  },
-  title: {
-    text: 'Distribusi Kategori Konser',
-    align: 'center'
-  },
-  plotOptions: {
-    bar: {
-      borderRadius: 4,
-      horizontal: false,
-      columnWidth: '55%',
-    }
-  },
-  dataLabels: {
-    enabled: false
-  },
-  legend: {
-    position: 'bottom'
+  revenue: {
+    ...chartBase.revenue,
+    series: [0, 0, 0, 0]
   }
 });
 
-// Chart options for Monthly Revenue Distribution
-const revenueDistributionOptions = ref({
-  chart: {
-    type: 'donut',
-    height: 350
-  },
-  colors: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
-  series: [44, 55, 32, 14],
-  labels: ['Regular', 'VIP', 'VVIP', 'Others'],
-  title: {
-    text: 'Distribusi Pendapatan per Kategori Tiket',
-    align: 'center'
-  },
-  legend: {
-    position: 'bottom'
-  },
-  responsive: [{
-    breakpoint: 480,
-    options: {
-      chart: {
-        width: 200
-      },
-      legend: {
-        position: 'bottom'
-      }
+// Update charts with real data
+const updateCharts = () => {
+  if (!dashboardData.value.monthlyStats) return;
+
+  chartState.value.sales.series = [
+    {
+      name: 'Jumlah Tiket',
+      data: dashboardData.value.monthlyStats.map(m => m.tickets)
+    },
+    {
+      name: 'Pendapatan (Juta)',
+      data: dashboardData.value.monthlyStats.map(m => Math.round(m.revenue / 1000000))
     }
-  }]
+  ];
+
+  chartState.value.revenue.series = [
+    dashboardData.value.ticketTypeStats.Regular || 0,
+    dashboardData.value.ticketTypeStats.VIP || 0,
+    dashboardData.value.ticketTypeStats.VVIP || 0,
+    dashboardData.value.ticketTypeStats.Others || 0
+  ];
+};
+
+// Computed properties for formatted values
+const formattedStats = computed(() => ({
+  pendapatan: formatCurrency(dashboardData.value.totalPendapatan),
+  konser: dashboardData.value.totalKonser,
+  pembelian: dashboardData.value.totalPembelian,
+  users: dashboardData.value.totalUsers
+}));
+
+onMounted(() => {
+  fetchDashboardData();
 });
 </script>
 
@@ -171,10 +228,12 @@ const revenueDistributionOptions = ref({
 
                 <!--begin::Stats-->
                 <div class="m-0">
-                  <!--begin::Number-->
-                  <span class="text-info fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1"></span>
-                  <!--end::Number-->
-
+                  <span v-if="isLoading" class="placeholder-glow">
+                    <span class="placeholder col-6"></span>
+                  </span>
+                  <span v-else class="text-info fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
+                    {{ dashboardData.totalKonser }}
+                  </span>
                   <!--begin::Desc-->
                   <span class="text-gray-500 fw-semibold fs-6">Total Konser</span>
                   <!--end::Desc-->
@@ -202,7 +261,8 @@ const revenueDistributionOptions = ref({
                 <!--begin::Stats-->
                 <div class="m-0">
                   <!--begin::Number-->
-                  <span class="text-success fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1"></span>
+                  <span class="text-success fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">{{ formattedStats.pembelian
+                    }}</span>
                   <!--end::Number-->
 
                   <!--begin::Desc-->
@@ -233,7 +293,8 @@ const revenueDistributionOptions = ref({
                 <!--begin::Stats-->
                 <div class="m-0">
                   <!--begin::Number-->
-                  <span class="text-success fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1"></span>
+                  <span class="text-success fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">{{ formattedStats.pendapatan
+                    }}</span>
                   <!--end::Number-->
 
                   <!--begin::Desc-->
@@ -262,8 +323,12 @@ const revenueDistributionOptions = ref({
 
                 <!--begin::Stats-->
                 <div class="m-0">
-                  <!--begin::Number-->
-                  <span class="text-info fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1"></span>
+                  <span v-if="isLoading" class="placeholder-glow">
+                    <span class="placeholder col-6"></span>
+                  </span>
+                  <span v-else class="text-info fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
+                    {{ dashboardData.totalUsers }}
+                  </span>
                   <!--end::Number-->
 
                   <!--begin::Desc-->
@@ -275,45 +340,69 @@ const revenueDistributionOptions = ref({
               <!--end::Items-->
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Ticket Sales Trend Chart -->
-      <div class="card">
-        <div class="card-body">
-          <apexchart
-            type="line"
-            height="350"
-            :options="ticketSalesOptions"
-            :series="ticketSalesOptions.series"
-          ></apexchart>
-        </div>
-      </div>
+              <!-- Sales Chart -->
+              <div class="card">
+                <div class="card-body">
+                  <apexchart
+                    v-if="!isLoading"
+                    type="line"
+                    height="350"
+                    :options="chartState.sales"
+                    :series="chartState.sales.series"
+                  ></apexchart>
+                  <div v-else class="chart-placeholder"></div>
+                </div>
+              </div>
 
-      <!-- Concert Categories Chart -->
-      <div class="card">
-        <div class="card-body">
-          <apexchart
-            type="bar"
-            height="350"
-            :options="concertCategoriesOptions"
-            :series="concertCategoriesOptions.series"
-          ></apexchart>
-        </div>
-      </div>
-
-      <!-- Revenue Distribution Chart -->
-      <div class="card">
-        <div class="card-body">
-          <apexchart
-            type="donut"
-            height="350"
-            :options="revenueDistributionOptions"
-            :series="revenueDistributionOptions.series"
-          ></apexchart>
+              <!-- Revenue Chart -->
+              <!-- <div class="card">
+                <div class="card-body">
+                  <apexchart
+                    v-if="!isLoading"
+                    type="donut"
+                    height="350"
+                    :options="chartState.revenue"
+                    :series="chartState.revenue.series"
+                  ></apexchart>
+                  <div v-else class="chart-placeholder"></div>
+                </div>
+              </div> -->
+            </div>
+          </div>
         </div>
       </div>
     </div>
-            </div>  
-            </div>
-            </div>  
-          </div>
   </main>
 </template>
+
+<style scoped>
+.stat-card {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background: white;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border-left: 4px solid;
+}
+
+.chart-placeholder {
+  height: 350px;
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-top: 0.5rem;
+}
+
+.placeholder {
+  background-color: #e9ecef;
+  border-radius: 0.25rem;
+}
+
+.placeholder-glow {
+  display: block;
+  min-height: 1.5rem;
+}
+</style>

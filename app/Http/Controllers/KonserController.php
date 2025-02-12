@@ -23,29 +23,20 @@ class KonserController extends Controller
 
     public function index(Request $request)
     {
+        $per = $request->per ?? 10;
+        $page = $request->page ? $request->page - 1 : 0;
+
+        DB::statement('set @no=0+' . $page * $per);
+
+        $data = Tiket::with('konser')->when($request->search, function (Builder $query, string $search) {
         $query = Konser::with(['tiket' => function($query) {
             $query->select('id', 'konsers_id', 'harga_regular', 'harga_vip', 'reguler', 'vip', 
                           'gate_a_capacity', 'gate_b_capacity', 'gate_c_capacity');
         }]);
+    })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
 
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('lokasi', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->has('kota') && !empty($request->kota)) {
-            $query->where('lokasi', $request->kota);
-        }
-
-        $data = $query->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $data
-        ]);
+        // If perPage is -1 or 0, return all records
+        return response()->json($data);
     }
 
     public function getCities()
@@ -92,7 +83,6 @@ class KonserController extends Controller
         'tanggal' => 'required|date',
         'jam' => 'required',
         'lokasi' => 'required|string|max:255',
-        'tiket_tersedia' => 'required|integer|min:0',
         'kontak' => 'nullable|string|max:255',
         'deskripsi' => 'required|string',
         'nama_sosmed' => 'required|string|max:255',
@@ -111,7 +101,6 @@ class KonserController extends Controller
             'tanggal' => $req['tanggal'],
             'jam' => $req['jam'],
             'lokasi' => $req['lokasi'],
-            'tiket_tersedia' => $req['tiket_tersedia'],
             'kontak' => $req['kontak'] ?? null,
             'deskripsi' => $req['deskripsi'],
             'nama_sosmed' => $req['nama_sosmed'],
@@ -165,7 +154,6 @@ class KonserController extends Controller
                 'tanggal' => 'required|date',
                 'jam' => 'required',
                 'lokasi' => 'required|string|max:255',
-                'tiket_tersedia' => 'required|integer|min:0',
                 'kontak' => 'nullable|string|max:255',
                 'deskripsi' => 'required|string',
                 'nama_sosmed' => 'required|string|max:255',

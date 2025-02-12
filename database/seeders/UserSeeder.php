@@ -10,6 +10,7 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        // Admin user
         User::create([
             'name' => 'Admin',
             'role_id' => 1,
@@ -18,6 +19,7 @@ class UserSeeder extends Seeder
             'phone' => '08123456789',
         ])->assignRole('admin');
 
+        // Regular user
         User::create([
             'name' => 'User',
             'photo' => '/media/musik/profileuser.jpg',
@@ -26,5 +28,15 @@ class UserSeeder extends Seeder
             'password' => bcrypt('12345678'),
             'phone' => '08123162631',
         ])->assignRole('user');
+
+        // Mitra user
+        User::create([
+            'name' => 'Mitra Test',
+            'email' => 'mitra@test.com',
+            'password' => bcrypt('12345678'),
+            'phone' => '081234567890',
+            'company_name' => 'PT Mitra Test',
+            'role_id' => 3,
+        ])->assignRole('mitra');
     }
 }

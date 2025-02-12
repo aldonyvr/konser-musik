@@ -14,17 +14,35 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
+        // Create Permissions
+        Permission::create(['name' => 'scan-ticket', 'guard_name' => 'api']);
+        Permission::create(['name' => 'verify-ticket', 'guard_name' => 'api']);
+        Permission::create(['name' => 'view-scan-history', 'guard_name' => 'api']);
+
         // Create Roles
-        Role::create([
+        $adminRole = Role::create([
             'name' => 'admin',
             'guard_name' => 'api',
             'full_name' => 'Administrator'
         ]);
 
-        Role::create([
+        $userRole = Role::create([
             'name' => 'user',
             'guard_name' => 'api',
             'full_name' => 'User'
+        ]);
+
+        $mitraRole = Role::create([
+            'name' => 'mitra',
+            'guard_name' => 'api',
+            'full_name' => 'Mitra Konser'
+        ]);
+
+        // Assign permissions to mitra role
+        $mitraRole->givePermissionTo([
+            'scan-ticket',
+            'verify-ticket',
+            'view-scan-history'
         ]);
     }
 }

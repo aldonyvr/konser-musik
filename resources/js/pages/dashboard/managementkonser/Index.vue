@@ -19,24 +19,21 @@ const columns = [
     column.accessor("no", {
         header: "No",
     }),
-    column.accessor("image", {
+    column.accessor("konser.image", {
         header: "Image",
         cell: cell => h('img', {src: `${cell.getValue()}`, width: 150 })
     }),
-    column.accessor("title", {
+    column.accessor("konser.title", {
         header: "Nama Konser",
     }),
-    column.accessor("lokasi", {
+    column.accessor("konser.lokasi", {
         header: "Lokasi",
     }),
-    column.accessor("tanggal", {
+    column.accessor("konser.tanggal", {
         header: "Tanggal",
     }),
-    column.accessor("jam", {
+    column.accessor("konser.jam", {
         header: "Jam",
-    }),
-    column.accessor("tiket_tersedia", {
-        header: "Total Tiket",
     }),
     // column.accessor("harga", {
     //     header: "Harga",
