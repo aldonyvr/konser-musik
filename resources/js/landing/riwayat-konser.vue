@@ -175,11 +175,10 @@ const generateBarcode = (data: string) => {
         <KTHeader />
     </nav>
 
-    <div class="mt-20"></div>
-    <div class="container flex-grow-1 mt-15">
+    <div class="container flex-grow-1 mt-20">
         <!-- Tab Buttons -->
-        <div class="d-flex mb-10">
-            <div class="btn-group" role="group" aria-label="Ticket Views">
+        <div class="d-flex mb-10 mt-20">
+            <div class="btn-group mt-20" role="group" aria-label="Ticket Views">
                 <button @click="activeTab = 'tickets'" class="btn btn-lg"
                     :class="activeTab === 'tickets' ? 'btn-primary' : 'btn-outline-primary'">
                     <i class="fas fa-ticket-alt me-2"></i>

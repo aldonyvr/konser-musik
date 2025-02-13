@@ -22,6 +22,9 @@ const fileTypes = ref(["image/jpeg", "image/png", "image/jpg"]);
 const photo = ref<any>([]);
 const formRef = ref();
 
+const konserList = ref<{ id: string; title: string }[]>([]);
+const selectedKonserId = ref(null);
+
 const formSchema = Yup.object().shape({
     name: Yup.string().required("Nama harus diisi"),
     email: Yup.string()
@@ -33,6 +36,11 @@ const formSchema = Yup.object().shape({
         .nullable(),
     phone: Yup.string().required("Nomor Telepon harus diisi"),
     role_id: Yup.string().required("Pilih role"),
+    konser_id: Yup.string().when('role_id', {
+        is: (val: string) => val === '3', // Assuming 3 is the mitra role ID
+        then: () => Yup.string().required('Pilih konser'),
+        otherwise: () => Yup.string().nullable()
+    }),
 });
 
 function getEdit() {
@@ -51,6 +59,23 @@ function getEdit() {
             unblock(document.getElementById("form-user"));
         });
 }
+
+const fetchKonserList = async () => {
+    try {
+        const response = await axios.get('/getKonser');
+        console.log('Fetched konser data:', response.data);
+        
+        if (Array.isArray(response.data.data)) {
+            konserList.value = response.data.data.map(konser => ({
+                id: konser.id.toString(),
+                text: `${konser.title} - ${konser.lokasi}`
+            }));
+        }
+    } catch (error) {
+        console.error('Error fetching konser:', error);
+        toast.error('Gagal memuat daftar konser');
+    }
+};
 
 function submit() {
     const formData = new FormData();
@@ -71,6 +96,11 @@ function submit() {
     }
     if (props.selected) {
         formData.append("_method", "PUT");
+    }
+
+    if (user.value.role_id === '3' && selectedKonserId.value) { // Mitra role
+        console.log('Adding konser_id:', selectedKonserId.value);
+        formData.append('konser_id', selectedKonserId.value);
     }
 
     block(document.getElementById("form-user"));
@@ -111,6 +141,7 @@ onMounted(async () => {
     if (props.selected) {
         getEdit();
     }
+    fetchKonserList();
 });
 
 watch(
@@ -121,6 +152,18 @@ watch(
         }
     }
 );
+
+watch(() => user.value.role_id, (newRole) => {
+    if (newRole === '3') { // Mitra role
+        fetchKonserList();
+    } else {
+        selectedKonserId.value = null;
+    }
+}, { immediate: true });
+
+watch(() => selectedKonserId.value, (newValue) => {
+    console.log('Selected Konser ID changed:', newValue);
+});
 </script>
 
 <template>
@@ -259,6 +302,31 @@ watch(
                         </div>
                     </div>
                     <!--end::Input group-->
+                </div>
+                <div v-if="user.role_id === '3'" class="col-md-6">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6 required">
+                            Pilih Konser
+                        </label>
+                        <Field
+                            name="konser_id"
+                            v-model="selectedKonserId"
+                        >
+                            <select2
+                                placeholder="Pilih konser"
+                                class="form-select-solid"
+                                :options="konserList"
+                                name="konser_id"
+                                v-model="selectedKonserId"
+                            >
+                            </select2>
+                        </Field>
+                        <div class="fv-plugins-message-container">
+                            <div class="fv-help-block">
+                                <ErrorMessage name="konser_id" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-6">
                     <!--begin::Input group-->

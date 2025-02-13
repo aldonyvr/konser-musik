@@ -16,30 +16,43 @@ class DataPemesanan extends Model
     protected $fillable = [
         'tiket_id',
         'user_id',
-        'status_pembayaran',
+        'order_id',
         'nama_pemesan',
         'email_pemesan',
         'telepon_pemesan',
         'alamat_pemesan',
         'tanggal_pemesan',
         'jumlah_tiket',
+        'status_pembayaran',
         'total_harga',
-        'gate_type',
-        'is_scanned',
-        'scanned_at',
-        'scan_status',
-        'scanned_by'
+        'gate',
+        'is_used'
     ];
 
     protected $casts = [
         'last_scanned_at' => 'datetime',
         'is_valid' => 'boolean',
         'is_scanned' => 'boolean',
-        'scanned_at' => 'datetime'
+        'scanned_at' => 'datetime',
+        'is_used' => 'boolean',
+        'tanggal_pemesan' => 'datetime'
     ];
 
     public function tiket(): BelongsTo
     {
-        return $this->belongsTo(Tiket::class);
+        return $this->belongsTo(Tiket::class, 'tiket_id')
+                    ->with('konser'); // Eager load konser relationship
+    }
+
+    public function konser()
+    {
+        return $this->hasOneThrough(
+            Konser::class,
+            Tiket::class,
+            'id',
+            'id',
+            'tiket_id',
+            'konsers_id'
+        );
     }
 }

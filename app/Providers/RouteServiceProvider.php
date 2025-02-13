@@ -36,5 +36,13 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
         });
+
+        // Add custom middleware for mitra access
+        Route::middleware('auth:api')->group(function () {
+            Route::middleware('mitra.access')->group(function () {
+                Route::get('/master/users', [UserController::class, 'get']);
+                Route::post('/master/users', [UserController::class, 'index']);
+            });
+        });
     }
 }

@@ -123,7 +123,8 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
             Route::get('edit/{uuid}', [DataPemesananController::class, 'edit']);
             Route::post('update/{uuid}', [DataPemesananController::class, 'update']);
             Route::post('store', [DataPemesananController::class, 'store'])->withoutMiddleware(['auth', 'verified']);
-            Route::get('/purchased-tickets', [DataPemesananController::class, 'getPurchasedTickets'])->withoutMiddleware(['auth', 'verified']);
+            Route::get('/purchased-tickets', [DataPemesananController::class, 'getPurchasedTickets'])->name('purchased-tickets')->withoutMiddleware(['auth', 'verified']);
+            Route::post('/payment-callback', [DataPemesananController::class, 'handlePaymentCallback'])->name('payment-callback')->withoutMiddleware(['auth', 'verified']);
         });
         Route::prefix('scan')->group(function () {
             Route::post('/scan-ticket', [ScannerController::class, 'scanTicket']);
@@ -138,3 +139,11 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
             Route::get('/tickets/scan-history', [TicketScannerController::class, 'getScanHistory']);
         });
     });
+
+Route::middleware(['auth:api'])->group(function () {
+    // Routes that both admin and mitra can access
+    Route::middleware(['mitra.user'])->group(function () {
+        Route::get('/master/users', [UserController::class, 'get']);
+        Route::post('/master/users', [UserController::class, 'index']);
+    });
+});

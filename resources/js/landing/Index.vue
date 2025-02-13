@@ -20,16 +20,20 @@ const isLoading = ref(false);
 
 const getKonser = async () => {
   try {
-    // Change to get all data without pagination
     const response = await axios.get("/konser", {
       params: {
-        per_page: 12 // Increase this number to get more data
+        per_page: 0 // Get all concerts
       }
     });
     
     if (response.data.data) {
-      konser.value = response.data.data;
-      filteredKonser.value = response.data.data;
+      // Convert date strings to Date objects for comparison
+      const processedData = response.data.data.map(concert => ({
+        ...concert,
+        parsedDate: new Date(concert.tanggal)
+      }));
+      konser.value = processedData;
+      filteredKonser.value = processedData;
       extractUniqueCities();
     }
   } catch (error) {
@@ -115,30 +119,22 @@ const goToEventDetail = (id: number) => {
 };
 
 const upcomingConcerts = computed(() => {
-  return konser.value.filter(concert => {
-    // Coming soon concerts: has minimal/no ticket data and future date
-    const hasMinimalTicketData = !concert.tiket || (
-      !concert.tiket.harga_regular &&
-      !concert.tiket.harga_vip &&
-      !concert.tiket.reguler &&
-      !concert.tiket.vip
-    );
-    const isFutureDate = new Date(concert.tanggal) > new Date();
-    return hasMinimalTicketData && isFutureDate;
+  const today = new Date();
+  return konser.value.filter(event => {
+    const concertDate = new Date(event.konser?.tanggal);
+    const isUpcoming = concertDate > today;
+    const hasNoTickets = !event.harga_regular && !event.harga_vip && !event.reguler && !event.vip;
+    return isUpcoming && hasNoTickets;
   });
 });
 
 const availableConcerts = computed(() => {
-  return konser.value.filter(concert => {
-    // Available concerts: has ticket data and is in the future
-    const hasTicketData = concert.tiket && (
-      concert.tiket.harga_regular ||
-      concert.tiket.harga_vip ||
-      concert.tiket.reguler ||
-      concert.tiket.vip
-    );
-    const isFutureDate = new Date(concert.tanggal) > new Date();
-    return hasTicketData && isFutureDate;
+  const today = new Date();
+  return konser.value.filter(event => {
+    const concertDate = new Date(event.konser?.tanggal);
+    const isUpcoming = concertDate > today;
+    const hasTickets = event.harga_regular || event.harga_vip || event.reguler || event.vip;
+    return isUpcoming && hasTickets;
   });
 });
 
@@ -289,6 +285,12 @@ const toggleShowMore = () => {
     document.getElementById('semua-konser')?.scrollIntoView({ behavior: 'smooth' });
   }
 };
+
+// Add debug logging
+watch([upcomingConcerts, availableConcerts], ([upcoming, available]) => {
+  console.log('Upcoming concerts:', upcoming.length);
+  console.log('Available concerts:', available.length);
+});
 </script>
 
 <template>
@@ -296,8 +298,9 @@ const toggleShowMore = () => {
     <KTHeader />
   </nav>
 
-  <main class="mt-6 ">
+  <main class="mt-20 ">
     <div class="mt-20">
+    <div class="mt-20"></div>
       <div id="splide" class="splide ">
         <div class="splide__track">
           <ul class="splide__list">
@@ -339,7 +342,7 @@ const toggleShowMore = () => {
 
 
     <div class="text-center mt-15 fade-in">
-      <h3 class="display-6 fw-bold mb-3" style="font-family: 'Lobster', cursive;">
+      <h3 class="display-6 fw-bold mb-3">
         🎶 Temukan Sensasi Musik Terbaik di Konser Kami! 🎸
       </h3>
       <h3 class="display-7" style="color: #ffcc00; font-family: 'Lobster', cursive;">
@@ -383,22 +386,22 @@ const toggleShowMore = () => {
         <div v-if="upcomingConcerts.length === 0" class="text-center">
           <p>Tidak ada konser yang akan datang saat ini.</p>
         </div>
-        <div v-for="event in upcomingConcerts" :key="event.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
-          <div class="card recommended-concert-card" @click="goToEventDetail(event.uuid)">
+        <div v-for="event in upcomingConcerts" :key="event.uuid" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+          <div class="card recommended-concert-card" @click="goToEventDetail(event.konser.uuid)">
             <div class="card-img-wrapper">
-              <img :src="`${event.image}`" class="card-img-top" alt="Upcoming Event Image">
+              <img :src="event.konser.image" class="card-img-top" alt="Upcoming Event Image">
               <div class="upcoming-badge">Coming Soon</div>
             </div>
             <div class="card-body">
-              <h5 class="card-title">{{ event.title }}</h5>
+              <h5 class="card-title">{{ event.konser.title }}</h5>
               <p class="card-text mb-1">
                 <small class="fs-7 fw-bold">
-                  <i class="fa-solid fa-calendar-days me-1" style="color: #ffcc00;"></i> {{ event.tanggal }}
+                  <i class="fa-solid fa-calendar-days me-1" style="color: #ffcc00;"></i> {{ event.konser.tanggal }}
                 </small>
               </p>
               <p class="card-text mb-2">
                 <small class="fs-7 fw-bold">
-                  <i class="fa-solid fa-location-dot me-1" style="color: green;"></i> {{ event.lokasi }}
+                  <i class="fa-solid fa-location-dot me-1" style="color: green;"></i> {{ event.konser.lokasi }}
                 </small>
               </p>
             </div>
@@ -419,27 +422,29 @@ const toggleShowMore = () => {
         <div v-if="availableConcerts.length === 0" class="text-center">
           <p>Tidak ada konser tersedia saat ini.</p>
         </div>
-        <div v-for="event in availableConcerts" :key="event.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
-          <div class="card concert-card" @click="goToEventDetail(event.uuid)">
+        <div v-for="event in availableConcerts" :key="event.uuid" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+          <div class="card concert-card" @click="goToEventDetail(event.konser.uuid)">
             <div class="card-img-wrapper">
-              <img :src="`${event.image}`" class="card-img-top" alt="Event Image">
+              <img :src="event.konser.image" class="card-img-top" alt="Event Image">
               <div class="available-badge">Tersedia</div>
             </div>
             <div class="card-body">
-              <h5 class="card-title">{{ event.title }}</h5>
+              <h5 class="card-title">{{ event.konser.title }}</h5>
               <p class="card-text mb-1">
                 <small class="fs-7 fw-bold">
-                  <i class="fa-solid fa-calendar-days me-1" style="color: #ffcc00;"></i> {{ event.tanggal }}
+                  <i class="fa-solid fa-calendar-days me-1" style="color: #ffcc00;"></i> {{ event.konser.tanggal }}
                 </small>
               </p>
               <p class="card-text mb-2">
                 <small class="fs-7 fw-bold">
-                  <i class="fa-solid fa-location-dot me-1" style="color: green;"></i> {{ event.lokasi }}
+                  <i class="fa-solid fa-location-dot me-1" style="color: green;"></i> {{ event.konser.lokasi }}
                 </small>
               </p>
               <div class="d-flex justify-content-between align-items-center">
-                <p class="card-text mb-0"> {{ event.harga }}</p>
-                <a @click.stop="goToEventDetail(event.uuid)" class="btn btn-primary btn-sm">
+                <p class="card-text mb-0">
+                  Rp {{ event.harga_regular }}
+                </p>
+                <a @click.stop="goToEventDetail(event.konser.uuid)" class="btn btn-primary btn-sm">
                   Tickets <i class="fa-solid fa-ticket ms-1"></i>
                 </a>
               </div>
@@ -465,23 +470,23 @@ const toggleShowMore = () => {
         <div v-for="event in displayedKonser" :key="event.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
           <div class="card concert-card" @click="goToEventDetail(event.uuid)">
             <div class="card-img-wrapper">
-              <img :src="`${event.image}`" class="card-img-top" alt="Event Image">
+              <img :src="`${event.konser.image}`" class="card-img-top" alt="Event Image">
             </div>
             <div class="card-body">
-              <h5 class="card-title">{{ event.title }}</h5>
+              <h5 class="card-title">{{ event.konser.title }}</h5>
               <p class="card-text mb-1">
                 <small class="fs-7 fw-bold">
-                  <i class="fa-solid fa-calendar-days me-1" style="color: #ffcc00;"></i> {{ event.tanggal }}
+                  <i class="fa-solid fa-calendar-days me-1" style="color: #ffcc00;"></i> {{ event.konser.tanggal }}
                 </small>
               </p>
               <p class="card-text mb-2">
                 <small class="fs-7 fw-bold">
-                  <i class="fa-solid fa-location-dot me-1" style="color: green;"></i> {{ event.lokasi }}
+                  <i class="fa-solid fa-location-dot me-1" style="color: green;"></i> {{ event.konser.lokasi }}
                 </small>
               </p>
               <div class="d-flex justify-content-between align-items-center">
-                <p class="card-text mb-0"> {{ event.harga }}</p>
-                <a @click.stop="goToEventDetail(event.uuid)" class="btn btn-primary btn-sm">
+                <p class="card-text mb-0"> {{ event.konser.harga }}</p>
+                <a @click.stop="goToEventDetail(event.konser.uuid)" class="btn btn-primary btn-sm">
                   Tickets <i class="fa-solid fa-ticket ms-1"></i>
                 </a>
               </div>
@@ -572,6 +577,7 @@ const toggleShowMore = () => {
   width: 100%;
   max-width: 100vw;
   overflow: hidden;
+  margin-top: 5%;
 }
 
 @keyframes gradientShift {
@@ -854,7 +860,7 @@ html {
 .card-title {
   font-size: 1.4rem;
   margin-bottom: 0.5rem;
-  font-family: 'Lobster', cursive;
+  font-family: var(--font-family-base);
 }
 
 .btn-primary {
@@ -922,5 +928,56 @@ html {
 
 .row > div:nth-child(n+13) {
   animation: fadeIn 0.5s ease-in-out;
+}
+
+.card-title, h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-base);
+}
+
+h1, .h1 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+h2, .h2 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+h3, .h3 {
+  font-weight: 600;
+}
+
+.display-6 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.card-title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.btn {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Update other specific text styles */
+.text-muted {
+  font-weight: 400;
+}
+
+.fw-bold {
+  font-weight: 700 !important;
+}
+
+.fs-6 {
+  font-weight: 500;
+}
+
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.03em;
 }
 </style>

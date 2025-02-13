@@ -25,17 +25,30 @@ class KonserController extends Controller
     {
         $per = $request->per ?? 10;
         $page = $request->page ? $request->page - 1 : 0;
+        $user = auth()->user();
 
         DB::statement('set @no=0+' . $page * $per);
 
-        $data = Tiket::with('konser')->when($request->search, function (Builder $query, string $search) {
-        $query = Konser::with(['tiket' => function($query) {
-            $query->select('id', 'konsers_id', 'harga_regular', 'harga_vip', 'reguler', 'vip', 
-                          'gate_a_capacity', 'gate_b_capacity', 'gate_c_capacity');
-        }]);
-    })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
+        $query = Tiket::with('konser');
 
-        // If perPage is -1 or 0, return all records
+        // Filter for mitra
+        if ($user && $user->role_id === 3) {
+            $query->whereHas('konser', function($q) use ($user) {
+                $q->where('id', $user->konser_id);
+            });
+        }
+
+        // Add search functionality
+        if ($request->search) {
+            $query->whereHas('konser', function($q) use ($request) {
+                $q->where('title', 'like', "%{$request->search}%")
+                  ->orWhere('lokasi', 'like', "%{$request->search}%");
+            });
+        }
+
+        $data = $query->latest()
+                     ->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
+
         return response()->json($data);
     }
 
@@ -201,5 +214,14 @@ class KonserController extends Controller
             'status' => true,
             'data' => $konser,
         ]);
+    }
+
+    public function getAll()
+    {
+        $konsers = Konser::select('id', 'title', 'tanggal', 'lokasi')
+            ->orderBy('title')
+            ->get();
+            
+        return response()->json($konsers);
     }
 }

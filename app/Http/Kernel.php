@@ -42,6 +42,7 @@ class Kernel extends HttpKernel
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\EnsureApiJson::class,
         ],
     ];
 
@@ -68,5 +69,7 @@ class Kernel extends HttpKernel
         'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
         'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
         'json' => \App\Http\Middleware\EnsureApiJson::class,
+        'mitra.access' => \App\Http\Middleware\MitraAccess::class,
+        'mitra.user' => \App\Http\Middleware\MitraUserAccess::class,
     ];
 }

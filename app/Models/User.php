@@ -24,9 +24,9 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'phone',
-        'company_name',
         'photo',
-        'role_id'
+        'role_id',
+        'konser_id'  // Make sure this is included
     ];
 
     /**
@@ -88,5 +88,11 @@ class User extends Authenticatable implements JWTSubject
     public function getPermissionAttribute()
     {
         return $this->getAllPermissions()->pluck('name');
+    }
+
+    // Add relationship
+    public function konser()
+    {
+        return $this->belongsTo(Konser::class);
     }
 }

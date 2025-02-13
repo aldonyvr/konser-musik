@@ -1,0 +1,64 @@
+@import 'fonts.css';
+
+/* Import Poppins font with various weights */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+/* Set default font family */
+:root {
+  --font-family-base: 'Poppins', sans-serif;
+}
+
+/* Apply font family globally */
+body {
+  font-family: var(--font-family-base);
+  font-weight: 400;
+}
+
+/* Typography utility classes */
+.font-light {
+  font-weight: 300;
+}
+
+.font-regular {
+  font-weight: 400;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-extrabold {
+  font-weight: 800;
+}
+
+/* Heading styles */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-base);
+  font-weight: 700;
+}
+
+/* Card title styles */
+.card-title {
+  font-family: var(--font-family-base);
+  font-weight: 600;
+}
+
+/* Navigation styles */
+.nav-link {
+  font-family: var(--font-family-base);
+  font-weight: 500;
+}
+
+/* Button styles */
+.btn {
+  font-family: var(--font-family-base);
+  font-weight: 600;
+}

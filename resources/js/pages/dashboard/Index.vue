@@ -59,11 +59,11 @@ const fetchDashboardData = async () => {
 
     // Calculate total pembelian and pendapatan
     dashboardData.value.totalPembelian = pembelianData.filter(item => 
-      item.status_pembayaran === 'Successfully'
+      item.status_pembayaran == 'Successfully'
     ).length;
 
     dashboardData.value.totalPendapatan = pembelianData.reduce((total, item) => {
-      if (item.status_pembayaran === 'Successfully') {
+      if (item.status_pembayaran == 'Successfully') {
         return total + (parseFloat(item.total_harga) || 0);
       }
       return total;
@@ -72,7 +72,7 @@ const fetchDashboardData = async () => {
     // Process monthly stats for charts
     const monthlyStats = Array(12).fill().map(() => ({ tickets: 0, revenue: 0 }));
     pembelianData.forEach(item => {
-      if (item.status_pembayaran === 'Successfully') {
+      if (item.status_pembayaran == 'Successfully') {
         const date = new Date(item.tanggal_pemesan);
         const month = date.getMonth();
         monthlyStats[month].tickets++;
@@ -288,13 +288,11 @@ onMounted(() => {
                     </i>
                   </span>
                 </div>
-                <!--end::Symbol-->
 
                 <!--begin::Stats-->
                 <div class="m-0">
                   <!--begin::Number-->
-                  <span class="text-success fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">{{ formattedStats.pendapatan
-                    }}</span>
+                  <span class="text-success fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">{{ formattedStats.pendapatan }}</span>
                   <!--end::Number-->
 
                   <!--begin::Desc-->

@@ -21,12 +21,31 @@ class UserController extends Controller
      */
     public function get(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => User::when($request->role_id, function (Builder $query, string $role_id) {
-                $query->role($role_id);
-            })->get()
-        ]);
+        try {
+            $user = auth()->user();
+            $query = User::query();
+
+            // If user is mitra, only return their own data
+            if ($user->role_id === '3') {
+                $query->where('id', $user->id);
+            }
+
+            \Log::info('User query:', [
+                'user_role' => $user->role_id,
+                'is_mitra' => $user->role_id === '3'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $query->get()
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in UserController@get: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving users'
+            ], 500);
+        }
     }
 
     public function changePassword(Request $request)
@@ -58,17 +77,29 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $per = $request->per ?? 10;
-        $page = $request->page ? $request->page - 1 : 0;
+        try {
+            $user = auth()->user();
+            $query = User::query();
 
-        DB::statement('set @no=0+' . $page * $per);
-        $data = User::when($request->search, function (Builder $query, string $search) {
-            $query->where('name', 'like', "%$search%")
-                ->orWhere('email', 'like', "%$search%")
-                ->orWhere('phone', 'like', "%$search%");
-        })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
+            // If user is mitra, only show their own data
+            if ($user->role_id === '3') {
+                $query->where('id', $user->id);
+            }
 
-        return response()->json($data);
+            \Log::info('User index query:', [
+                'user_role' => $user->role_id,
+                'is_mitra' => $user->role_id === '3'
+            ]);
+
+            $data = $query->paginate($request->per ?? 10);
+            return response()->json($data);
+        } catch (\Exception $e) {
+            \Log::error('Error in UserController@index: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving users'
+            ], 500);
+        }
     }
 
     /**
@@ -76,23 +107,42 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request)
     {
-        $validatedData = $request->validated();
+        try {
+            DB::beginTransaction();
+            
+            // Create user with konser_id if role is mitra
+            $userData = [
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'phone' => $request->phone,
+                'role_id' => $request->role_id
+            ];
 
-        if ($request->hasFile('photo')) {
-            $validatedData['photo'] = $request->file('photo')->store('photo', 'public');
+            // Add konser_id if role is mitra (role_id = 3)
+            if ($request->role_id == '3' && $request->konser_id) {
+                $userData['konser_id'] = $request->konser_id;
+            }
+
+            $user = User::create($userData);
+
+            $role = Role::findById($request->role_id);
+            $user->assignRole($role);
+            
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => 'User created successfully',
+                'data' => $user
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        $user = User::create($validatedData);
-
-        $role = Role::findById($validatedData['role_id']);
-        $user->assignRole($role);
-
-        return response()->json([
-            'success' => true,
-            'user' => $user
-        ]);
     }
-
 
     /**
      * Display the specified resource.

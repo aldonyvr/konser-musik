@@ -1,0 +1,37 @@
+/* Import Poppins font with all needed weights */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --font-family-base: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Global font settings */
+body {
+  font-family: var(--font-family-base);
+  font-weight: 400;
+}
+
+/* Typography scale */
+h1, .h1 { font-weight: 800; letter-spacing: -0.02em; }
+h2, .h2 { font-weight: 700; letter-spacing: -0.01em; }
+h3, .h3 { font-weight: 600; letter-spacing: 0; }
+h4, .h4 { font-weight: 600; }
+h5, .h5 { font-weight: 500; }
+h6, .h6 { font-weight: 500; }
+
+/* Font weight utilities */
+.font-light { font-weight: 300; }
+.font-regular { font-weight: 400; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.font-extrabold { font-weight: 800; }
+
+/* Component typography */
+.btn { font-weight: 500; letter-spacing: 0.02em; }
+.nav-link { font-weight: 500; }
+.card-title { font-weight: 600; letter-spacing: -0.01em; }
+.display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}

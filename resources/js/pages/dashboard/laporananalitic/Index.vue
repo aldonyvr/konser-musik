@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { h, ref, watch } from "vue";
+import { h, ref, watch, computed } from "vue";
 import { useDelete } from "@/libs/hooks";
 import { createColumnHelper } from "@tanstack/vue-table";
 import type { Konser } from "@/types";
 import { currency } from '@/libs/utils';
 import axios from '@/libs/axios';
+import { toast } from 'vue3-toastify';
+import { useAuthStore } from "@/stores/auth";
 
 const column = createColumnHelper<Konser>();
 const paginateRef = ref<any>(null);
@@ -13,42 +15,91 @@ const openForm = ref<boolean>(false);
 
 const showReportModal = ref<boolean>(false);
 const currentReportData = ref<any>(null);
+const isLoading = ref<boolean>(false);
 
 const { delete: deleteUser } = useDelete({
   onSuccess: () => paginateRef.value.refetch(),
 });
 
+const authStore = useAuthStore();
+const userRole = computed(() => authStore.user?.role_id);
+const userKonserId = computed(() => authStore.user?.konser_id);
+
+// Filter data based on user role and konser_id
+const filterData = (data) => {
+  if (userRole.value === '3' && userKonserId.value) {
+    return data.filter(item => item.konser_id === userKonserId.value);
+  }
+  return data;
+};
+
+// Update paginate url based on user role
+const paginateUrl = computed(() => {
+  if (userRole.value === '3') {
+    return `/konser/index?konser_id=${userKonserId.value}`;
+  }
+  return '/konser/index';
+});
+
 // Function to view detailed report
 const viewReport = async (uuid: string) => {
   try {
-    const response = await axios.get(`/konser/report/${uuid}`);
+    isLoading.value = true;
+    if (userRole.value === '3' && userKonserId.value) {
+      // Only allow if konser matches mitra's assigned konser
+      const konserCheck = await axios.get(`/konser/${uuid}`);
+      if (konserCheck.data.id !== userKonserId.value) {
+        toast.error('Unauthorized access');
+        return;
+      }
+    }
+    const response = await axios.get(`konser/report/${uuid}`, {
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
+    
+    if (response.data.error) {
+      throw new Error(response.data.error);
+    }
+    
     currentReportData.value = response.data;
     showReportModal.value = true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to fetch report:', error);
-    // Optionally show an error notification
+    toast.error(error.response?.data?.error || 'Gagal memuat laporan');
+  } finally {
+    isLoading.value = false;
   }
 };
 
 // Function to download report
 const downloadReport = async (uuid: string, type: 'excel' | 'pdf') => {
   try {
+    isLoading.value = true;
     const response = await axios.get(`/konser/download-report/${uuid}`, {
       responseType: 'blob',
-      params: { type }
+      params: { type },
+      headers: {
+        'Accept': 'application/json',
+      }
     });
 
-    // Create a link element to trigger download
-    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const contentType = response.headers['content-type'];
+    const blob = new Blob([response.data], { type: contentType });
+    const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', `konser-report-${uuid}.${type}`);
     document.body.appendChild(link);
     link.click();
-    link.remove();
-  } catch (error) {
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
     console.error('Failed to download report:', error);
-    // Optionally show an error notification
+    toast.error('Gagal mengunduh laporan');
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -56,17 +107,17 @@ const columns = [
   column.accessor("no", {
     header: "No",
   }),
-  column.accessor("image", {
+  column.accessor("konser.image", {
     header: "Image",
     cell: cell => h('img', { src: `${cell.getValue()}`, width: 150 })
   }),
-  column.accessor("title", {
+  column.accessor("konser.title", {
     header: "Nama Konser",
   }),
-  column.accessor("lokasi", {
+  column.accessor("konser.lokasi", {
     header: "Lokasi",
   }),
-  column.accessor("tanggal", {
+  column.accessor("konser.tanggal", {
     header: "Tanggal",
   }),
   column.accessor("tiket_tersedia", {
@@ -114,9 +165,9 @@ const columns = [
                   "a",
                   {
                     class: "dropdown-item",
-                    onClick: () => downloadReport(cell.getValue(), 'excel')
+                    onClick: () => downloadReport(cell.row.original.konser.uuid, 'pdf')
                   },
-                  "Download Excel"
+                  "Download PDF"
                 )
               ),
               h(
@@ -125,11 +176,11 @@ const columns = [
                   "a",
                   {
                     class: "dropdown-item",
-                    onClick: () => downloadReport(cell.getValue(), 'pdf')
+                    onClick: () => downloadReport(cell.row.original.konser.uuid, 'excel')
                   },
-                  "Download PDF"
+                  "Download Excel"
                 )
-              )
+              ),
             ]
           )
         ]),
@@ -149,6 +200,18 @@ const columns = [
 
 const refresh = () => paginateRef.value.refetch();
 
+const fetchData = async () => {
+  try {
+    const params = userRole.value === '3' ? { konser_id: userKonserId.value } : {};
+    const response = await axios.get('/konser/report', { params });
+    return filterData(response.data);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    toast.error('Gagal memuat data');
+    return [];
+  }
+};
+
 watch(openForm, (val) => {
   if (!val) {
     selected.value = "";
@@ -160,10 +223,17 @@ watch(openForm, (val) => {
 <template>
   <div class="card">
     <div class="card-header align-items-center">
-      <h1 class="text-center font-bold mb-2 text-center">Dashboard Analytics Konser</h1>
+      <h1 class="text-center font-bold mb-2 text-center">
+        {{ userRole === '3' ? 'Laporan Konser Anda' : 'Dashboard Analytics Konser' }}
+      </h1>
     </div>
     <div class="card-body">
-      <paginate ref="paginateRef" id="table-users" url="/konser/index" :columns="columns"></paginate>
+      <paginate 
+        ref="paginateRef" 
+        id="table-users" 
+        :url="paginateUrl" 
+        :columns="columns"
+      ></paginate>
     </div>
   </div>
 

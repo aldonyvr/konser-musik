@@ -140,78 +140,67 @@ const handleBooking = async () => {
 };
 
 const submitBooking = async () => {
-    if (!authStore.isAuthenticated) {
-        showLoginModal.value = true;
-        return;
-    }
-
-    if (reguler.value > availableTickets.value.regular || vip.value > availableTickets.value.vip) {
-        alert('Jumlah tiket yang dipilih melebihi stok yang tersedia.');
-        return;
-    }
-
-    const allForms = [...ticketForms.value.regular, ...ticketForms.value.vip];
-    const isValid = allForms.every(form => {
-        return form.nama_pemesan &&
-            form.nama_pemesan.trim() !== '' &&
-            form.email_pemesan &&
-            form.email_pemesan.trim() !== '' &&
-            form.telepon_pemesan &&
-            form.telepon_pemesan.trim() !== '' &&
-            form.alamat_pemesan &&
-            form.alamat_pemesan.trim() !== '';
-    });
-
-    if (!isValid) {
-        alert('Mohon lengkapi semua data pemesan untuk setiap tiket');
-        return;
-    }
-
     try {
         isSubmitting.value = true;
 
-        if (!tiketId) {
-            throw new Error('Invalid ticket ID');
-        }
-        const formattedForms = allForms.map(form => ({
-            ...form,
-            total_harga: form.type === 'vip' ? ticketPrices.value.vip : ticketPrices.value.regular
-        }));
+        // Validate required fields
+        const allForms = [...ticketForms.value.regular, ...ticketForms.value.vip];
+        const isValid = allForms.every(form => {
+            return form.nama_pemesan?.trim() &&
+                form.email_pemesan?.trim() &&
+                form.telepon_pemesan?.trim() &&
+                form.alamat_pemesan?.trim();
+        });
 
+        if (!isValid) {
+            throw new Error('Mohon lengkapi semua data pemesan');
+        }
+
+        if (!tiketId) {
+            throw new Error('ID tiket tidak valid');
+        }
+
+        // Format data for API
         const bookingData = {
             tiketId: ticketDetails.value?.uuid,
-            reguler: reguler.value,
-            vip: vip.value,
-            totalPrice: totalPrice.value,
-            tickets: formattedForms
+            tickets: allForms.map(form => ({
+                nama_pemesan: form.nama_pemesan,
+                email_pemesan: form.email_pemesan,
+                telepon_pemesan: form.telepon_pemesan,
+                alamat_pemesan: form.alamat_pemesan,
+                type: form.type,
+                total_harga: form.type === 'vip' ? ticketPrices.value.vip : ticketPrices.value.regular,
+                gate: form.type === 'regular' ? form.gate : null
+            })),
+            totalPrice: totalPrice.value
         };
 
         console.log('Sending booking data:', bookingData);
 
         const response = await axios.post('/datapemesan/store', bookingData);
 
-        if (response.data.success && response.data.snap_token) {
-            // Redirect ke halaman pembayaran dengan menyertakan snap token
-            router.push({
-                path: '/payment',
-                query: {
-                    token: response.data.snap_token,
-                    order_id: response.data.order_id
-                }
-            });
-        } else {
-            throw new Error('Gagal mendapatkan token pembayaran');
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Gagal membuat pesanan');
         }
+
+        if (!response.data.data?.snap_token) {
+            throw new Error('Token pembayaran tidak ditemukan');
+        }
+
+        // Redirect to payment page
+        router.push({
+            path: '/payment',
+            query: {
+                token: response.data.data.snap_token,
+                order_id: response.data.data.order_id
+            }
+        });
+
     } catch (error) {
         console.error('Booking error:', error);
+        alert(error.message || 'Terjadi kesalahan saat pemesanan');
+    } finally {
         isSubmitting.value = false;
-        if (error.response?.status === 401) {
-            showLoginModal.value = true;
-            showBookingForm.value = false;
-        } else {
-            console.error('Booking failed:', error);
-            alert(error.response?.data?.message || 'Pemesanan gagal. Silakan coba lagi.');
-        }
     }
 };
 
@@ -328,9 +317,7 @@ onMounted(() => {
     <nav>
         <KTHeader />
     </nav>
-    <div class="mt-13"></div>
-    <div class="mt-20"></div>
-    <div class="container mt-20 mb-20">
+    <div class="container mb-20">
         <div class="row justify-content-center">
             <div class="col-lg-10">
                 <div class="card shadow">
@@ -594,6 +581,7 @@ onMounted(() => {
     border: none;
     transition: all 0.3s ease;
     border-radius: 15px;
+    margin-top: 10rem;
 }
 
 .card:hover {

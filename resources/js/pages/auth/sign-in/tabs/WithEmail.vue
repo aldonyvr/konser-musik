@@ -76,30 +76,36 @@ export default defineComponent({
     },
     methods: {
         submit() {
-            blockBtn(this.submitButton);
+    blockBtn(this.submitButton);
 
-            axios.post("/auth/login", { ...this.data, type: "email" })
-                .then(res => {
-                    // Store user data and token
-                    this.store.setAuth(res.data.user, res.data.token);
-                    
-                    // Check user role and redirect accordingly
-                    if (res.data.user.role_id === 2) {
-                        this.router.push("/");
-                    } else {
-                        this.router.push("/dashboard");
-                    }
-                    
-                    // Show success message
-                    toast.success("Login berhasil!");
-                })
-                .catch(error => {
-                    toast.error(error.response?.data?.message || "Terjadi kesalahan saat login");
-                })
-                .finally(() => {
-                    unblockBtn(this.submitButton);
-                });
-        },
+    axios.post("/auth/login", { ...this.data, type: "email" })
+        .then(res => {
+            // Store user data and token
+            this.store.setAuth(res.data.user, res.data.token);
+            
+            // Check user role and redirect accordingly
+            switch (res.data.user.role_id) {
+                case 2:
+                    this.router.push("/");
+                    break;
+                case 3:
+                    this.router.push("/dashboard");
+                    break;
+                default:
+                    this.router.push("/dashboard");
+                    break;
+            }
+            
+            // Show success message
+            toast.success("Login berhasil!");
+        })
+        .catch(error => {
+            toast.error(error.response?.data?.message || "Terjadi kesalahan saat login");
+        })
+        .finally(() => {
+            unblockBtn(this.submitButton);
+        });
+},
         togglePassword(ev) {
             const passwordField = document.querySelector("[name=password]");
             const type = passwordField.type;

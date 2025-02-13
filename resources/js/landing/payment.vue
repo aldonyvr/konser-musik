@@ -23,6 +23,21 @@ const fetchTickets = async (orderId: string) => {
     }
 };
 
+const handlePaymentUpdate = async (result) => {
+    try {
+        // Send payment result to backend
+        await axios.post('datapemesan/payment-callback', {
+            order_id: route.query.order_id,
+            transaction_status: result.transaction_status,
+            fraud_status: result.fraud_status
+        });
+
+        console.log('Payment status updated:', result);
+    } catch (error) {
+        console.error('Error updating payment status:', error);
+    }
+};
+
 onMounted(() => {
     const token = route.query.token as string;
     const orderId = route.query.order_id as string;
@@ -37,7 +52,7 @@ onMounted(() => {
         onSuccess: async function (result) {
             paymentStatus.value = 'success';
             try {
-                await fetchTickets(orderId);
+                await handlePaymentUpdate(result);
                 // Add delay before redirect to ensure data is processed
                 setTimeout(() => {
                     router.push({ 
@@ -49,13 +64,15 @@ onMounted(() => {
                 console.error('Error processing payment:', error);
             }
         },
-        onPending: function (result) {
+        onPending: async function (result) {
             paymentStatus.value = 'pending';
+            await handlePaymentUpdate(result);
             alert('Pembayaran pending. Silahkan selesaikan pembayaran Anda.');
             router.push('/invoice/' + orderId);
         },
-        onError: function (result) {
+        onError: async function (result) {
             paymentStatus.value = 'error';
+            await handlePaymentUpdate(result);
             alert('Pembayaran gagal.');
             console.error('Payment Error:', result);
             router.push('/payment');
@@ -94,38 +111,9 @@ onMounted(() => {
                                 <i class="fas fa-check-circle"></i>
                             </div>
                             <h2>Pembayaran Berhasil!</h2>
-                            <p>Berikut adalah tiket Anda:</p>
                         </div>
 
-                        <!-- Ticket Cards -->
-                        <div class="ticket-container">
-                            <div v-for="ticket in tickets" :key="ticket.uuid" class="ticket-card">
-                                <div class="ticket-header">
-                                    <h3>{{ ticket.event_name }}</h3>
-                                    <span class="ticket-type">{{ ticket.ticket_type }}</span>
-                                </div>
-                                <div class="ticket-body">
-                                    <div class="ticket-info">
-                                        <p><strong>Ticket ID:</strong> {{ ticket.uuid }}</p>
-                                        <p><strong>Nama:</strong> {{ ticket.customer_name }}</p>
-                                        <p><strong>Tanggal:</strong> {{ ticket.event_date }}</p>
-                                        <p><strong>Lokasi:</strong> {{ ticket.venue }}</p>
-                                    </div>
-                                    <div class="ticket-qr">
-                                        <!-- Add QR Code component here if needed -->
-                                        <img :src="'/api/qr-code/' + ticket.uuid" alt="QR Code" />
-                                    </div>
-                                </div>
-                                <div class="ticket-footer">
-                                    <button class="btn btn-primary" @click="window.print()">
-                                        <i class="fas fa-print"></i> Cetak Tiket
-                                    </button>
-                                    <button class="btn btn-secondary" @click="downloadTicket(ticket.uuid)">
-                                        <i class="fas fa-download"></i> Unduh
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
             </div>

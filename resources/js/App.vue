@@ -58,7 +58,71 @@ onMounted(() => {
 @import "assets/sass/plugins";
 @import "assets/sass/style";
 
+:root {
+  --font-family-base: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
 #app {
-    display: contents;
+  font-family: var(--font-family-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Text weight utilities */
+.text-light {
+  font-weight: 300 !important;
+}
+
+.text-regular {
+  font-weight: 400 !important;
+}
+
+.text-medium {
+  font-weight: 500 !important;
+}
+
+.text-semibold {
+  font-weight: 600 !important;
+}
+
+.text-bold {
+  font-weight: 700 !important;
+}
+
+.text-extrabold {
+  font-weight: 800 !important;
+}
+
+/* Heading styles */
+.heading-1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.heading-2 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.heading-3 {
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+/* Components */
+.nav-link {
+  font-weight: 500;
+}
+
+.btn {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.card-title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 </style>

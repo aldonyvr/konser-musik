@@ -14,12 +14,21 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create Permissions
-        Permission::create(['name' => 'scan-ticket', 'guard_name' => 'api']);
-        Permission::create(['name' => 'verify-ticket', 'guard_name' => 'api']);
-        Permission::create(['name' => 'view-scan-history', 'guard_name' => 'api']);
+        // Create basic permissions
+        $permissions = [
+            'master-user',
+            'master-role',
+            'setting',
+            'view-dashboard',
+            'view-stats',
+            'manage-own-konser'
+        ];
 
-        // Create Roles
+        foreach ($permissions as $permission) {
+            Permission::create(['name' => $permission, 'guard_name' => 'api']);
+        }
+
+        // Create roles
         $adminRole = Role::create([
             'name' => 'admin',
             'guard_name' => 'api',
@@ -38,11 +47,14 @@ class RoleSeeder extends Seeder
             'full_name' => 'Mitra Konser'
         ]);
 
-        // Assign permissions to mitra role
+        // Assign all permissions to admin
+        $adminRole->givePermissionTo(Permission::all());
+
+        // Assign specific permissions to mitra
         $mitraRole->givePermissionTo([
-            'scan-ticket',
-            'verify-ticket',
-            'view-scan-history'
+            'view-dashboard',
+            'view-stats',
+            'manage-own-konser'
         ]);
     }
 }

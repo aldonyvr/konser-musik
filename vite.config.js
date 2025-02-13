@@ -4,6 +4,7 @@ import process from "node:process";
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import laravel from "laravel-vite-plugin";
+import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -12,10 +13,13 @@ export default defineConfig(({ mode }) => {
     return {
         server: {
             host: process.env.VITE_HOST,
+            hmr: {
+                overlay: false
+            }
         },
         plugins: [
             laravel({
-                input: ["resources/css/app.css", "resources/js/main.ts"],
+                input: ["resources/css/app.css", "resources/js/app.ts"],
                 refresh: true,
             }),
             vue({
@@ -29,14 +33,14 @@ export default defineConfig(({ mode }) => {
         ],
         resolve: {
             alias: {
-                "vue-i18n": "vue-i18n/dist/vue-i18n.cjs.js",
-                "@": fileURLToPath(new URL("./resources/js", import.meta.url)),
+                "@": path.resolve(__dirname, './resources/js')
             },
         },
         optimizeDeps: {
             esbuildOptions: {
                 target: ["es2020", "safari14"],
             },
+            include: ['vue', 'vue-router']
         },
         build: {
             chunkSizeWarningLimit: 3000,
