@@ -40,8 +40,7 @@ class DataPemesanan extends Model
 
     public function tiket(): BelongsTo
     {
-        return $this->belongsTo(Tiket::class, 'tiket_id')
-                    ->with('konser'); // Eager load konser relationship
+        return $this->belongsTo(Tiket::class, 'tiket_id');
     }
 
     public function konser()

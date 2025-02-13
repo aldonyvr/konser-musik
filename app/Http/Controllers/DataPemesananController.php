@@ -204,16 +204,15 @@ class DataPemesananController extends Controller
             
             $orderId = $request->order_id;
             $transactionStatus = $request->transaction_status;
-            $fraudStatus = $request->fraud_status;
 
             \Log::info('Payment callback received:', [
                 'order_id' => $orderId,
-                'status' => $transactionStatus,
-                'fraud_status' => $fraudStatus
+                'status' => $transactionStatus
             ]);
 
-            // Update all tickets with the same order_id
-            $pemesanan = DataPemesanan::where('order_id', $orderId)->get();
+            $pemesanan = DataPemesanan::where('order_id', $orderId)
+                ->with('tiket')
+                ->get();
             
             if ($pemesanan->isEmpty()) {
                 throw new \Exception('Order not found: ' . $orderId);
@@ -222,6 +221,33 @@ class DataPemesananController extends Controller
             foreach ($pemesanan as $ticket) {
                 if ($transactionStatus == 'capture' || $transactionStatus == 'settlement') {
                     $ticket->status_pembayaran = 'Successfully';
+                    
+                    // Update ticket stock
+                    $tiket = $ticket->tiket;
+                    if ($tiket) {
+                        // Check gate type and update corresponding capacity
+                        if ($ticket->gate) {
+                            $gateField = 'gate_' . strtolower(substr($ticket->gate, -1)) . '_capacity';
+                            if (isset($tiket->$gateField)) {
+                                $tiket->$gateField = max(0, $tiket->$gateField - 1);
+                                $tiket->reguler = max(0, $tiket->reguler - 1); // Update regular ticket count
+                                \Log::info('Updated regular ticket stock:', [
+                                    'tiket_id' => $tiket->id,
+                                    'gate' => $ticket->gate,
+                                    'new_capacity' => $tiket->$gateField
+                                ]);
+                            }
+                        } else {
+                            // VIP ticket
+                            $tiket->vip = max(0, $tiket->vip - 1);
+                            \Log::info('Updated VIP ticket stock:', [
+                                'tiket_id' => $tiket->id,
+                                'remaining_vip' => $tiket->vip
+                            ]);
+                        }
+                        
+                        $tiket->save();
+                    }
                 } else if ($transactionStatus == 'pending') {
                     $ticket->status_pembayaran = 'Pending';
                 } else if (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
@@ -229,18 +255,12 @@ class DataPemesananController extends Controller
                 }
                 
                 $ticket->save();
-                
-                \Log::info('Updated ticket status:', [
-                    'ticket_id' => $ticket->id,
-                    'new_status' => $ticket->status_pembayaran
-                ]);
             }
 
             DB::commit();
-
             return response()->json([
                 'success' => true,
-                'message' => 'Payment status updated successfully'
+                'message' => 'Payment and stock updated successfully'
             ]);
 
         } catch (\Exception $e) {
@@ -248,7 +268,7 @@ class DataPemesananController extends Controller
             \Log::error('Payment callback error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error processing payment: ' . $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }

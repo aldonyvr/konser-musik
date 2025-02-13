@@ -27,6 +27,16 @@ class Tiket extends Model
         'gate_e_capacity',
     ];
 
+    protected $casts = [
+        'reguler' => 'integer',
+        'vip' => 'integer',
+        'gate_a_capacity' => 'integer',
+        'gate_b_capacity' => 'integer',
+        'gate_c_capacity' => 'integer',
+        'gate_d_capacity' => 'integer',
+        'gate_e_capacity' => 'integer',
+    ];
+
     public function konser(): BelongsTo
     {
         return $this->belongsTo(Konser::class, 'konsers_id');

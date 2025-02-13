@@ -486,7 +486,7 @@ watch([upcomingConcerts, availableConcerts], ([upcoming, available]) => {
               </p>
               <div class="d-flex justify-content-between align-items-center">
                 <p class="card-text mb-0"> {{ event.konser.harga }}</p>
-                <a @click.stop="goToEventDetail(event.konser.uuid)" class="btn btn-primary btn-sm">
+                <a @click.stop="goToEventDetail(event.tiket.uuid)" class="btn btn-primary btn-sm">
                   Tickets <i class="fa-solid fa-ticket ms-1"></i>
                 </a>
               </div>

@@ -3,6 +3,7 @@ import VueApexCharts from "vue3-apexcharts";
 import { ref, onMounted, computed } from 'vue';
 import axios from "@/libs/axios";
 import { toast } from "vue3-toastify";
+import { useAuthStore } from "@/stores/auth";
 
 // Dashboard stats
 const dashboardData = ref({
@@ -20,6 +21,8 @@ const dashboardData = ref({
 });
 
 const isLoading = ref(true);
+const authStore = useAuthStore();
+const isMitra = computed(() => authStore.user?.role_id == '3');
 
 // Format currency
 const formatCurrency = (value) => {
@@ -34,45 +37,51 @@ const formatCurrency = (value) => {
 const fetchDashboardData = async () => {
   try {
     isLoading.value = true;
-
-    const [konserRes, pembelianRes, userRes] = await Promise.all([
-      axios.get('/getKonser'),
-      axios.post('/datapemesan', { // Changed to POST request
-        search: '',
-        page: 1,
-        per: 999999 // Get all records
-      }),
-      axios.get('master/users')
-    ]);
-
-    // Process konser data
-    if (Array.isArray(konserRes.data)) {
-      dashboardData.value.totalKonser = konserRes.data.length;
-    } else if (konserRes.data.data) {
-      dashboardData.value.totalKonser = konserRes.data.data.length;
-    }
+    const params = {};
     
-    // Process pembelian data
-    const pembelianData = Array.isArray(pembelianRes.data) ? 
-      pembelianRes.data : 
-      pembelianRes.data.data || [];
+    // Add konser_id filter for mitra
+    if (isMitra.value && authStore.user?.konser_id) {
+      params.konser_id = authStore.user.konser_id;
+    }
 
-    // Calculate total pembelian and pendapatan
-    dashboardData.value.totalPembelian = pembelianData.filter(item => 
-      item.status_pembayaran == 'Successfully'
-    ).length;
+    const pembelianRes = await axios.post('/datapemesan', { 
+      search: '',
+      page: 1,
+      per: 999999,
+      ...params
+    });
 
-    dashboardData.value.totalPendapatan = pembelianData.reduce((total, item) => {
-      if (item.status_pembayaran == 'Successfully') {
-        return total + (parseFloat(item.total_harga) || 0);
-      }
-      return total;
-    }, 0);
+    const pembelianData = pembelianRes.data.data || [];
 
-    // Process monthly stats for charts
+    // Calculate totals
+    dashboardData.value = {
+      ...dashboardData.value,
+      totalPembelian: pembelianData.filter(item => 
+        item.status_pembayaran === 'Successfully'
+      ).length,
+      totalPendapatan: pembelianData.reduce((total, item) => {
+        if (item.status_pembayaran === 'Successfully') {
+          return total + (parseFloat(item.total_harga) || 0);
+        }
+        return total;
+      }, 0)
+    };
+
+    // Only fetch additional data for non-mitra users
+    if (!isMitra.value) {
+      const [konserRes, userRes] = await Promise.all([
+        axios.get('/getKonser'),
+        axios.get('master/users')
+      ]);
+
+      dashboardData.value.totalKonser = konserRes.data.data?.length || 0;
+      dashboardData.value.totalUsers = userRes.data.data?.length || 0;
+    }
+
+    // Update monthly stats
     const monthlyStats = Array(12).fill().map(() => ({ tickets: 0, revenue: 0 }));
     pembelianData.forEach(item => {
-      if (item.status_pembayaran == 'Successfully') {
+      if (item.status_pembayaran === 'Successfully') {
         const date = new Date(item.tanggal_pemesan);
         const month = date.getMonth();
         monthlyStats[month].tickets++;
@@ -81,23 +90,7 @@ const fetchDashboardData = async () => {
     });
     dashboardData.value.monthlyStats = monthlyStats;
 
-    // Process users data
-    if (Array.isArray(userRes.data)) {
-      dashboardData.value.totalUsers = userRes.data.length;
-    } else if (userRes.data.data) {
-      dashboardData.value.totalUsers = userRes.data.data.length;
-    }
-
-    console.log('Dashboard Data:', {
-      konser: dashboardData.value.totalKonser,
-      pembelian: dashboardData.value.totalPembelian,
-      pendapatan: dashboardData.value.totalPendapatan,
-      users: dashboardData.value.totalUsers
-    });
-
-    // Update charts
     updateCharts();
-
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
     toast.error('Gagal memuat data dashboard');
@@ -209,43 +202,44 @@ onMounted(() => {
         <div class="mt-n20 position-relative">
           <!--begin::Row-->
           <div class="row g-3 g-lg-6">
-            <!--begin::Col-->
-            <div class="col-md-3">
-              <!--begin::Items-->
-              <div class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-info border-left-5 border-start">
-                <!--begin::Symbol-->
-                <div class="symbol symbol-30px me-5 mb-8">
-                  <span class="symbol-label">
-                    <i class="ki-duotone ki-profile-user fs-2x text-info">
-                      <i class="path1"></i>
-                      <i class="path2"></i>
-                      <i class="path3"></i>
-                      <i class="path4"></i>
-                    </i>
-                  </span>
-                </div>
-                <!--end::Symbol-->
+            <!-- Show these cards only for non-mitra users -->
+            <template v-if="!isMitra">
+              <div class="col-md-3">
+                <!-- Total Konser Card -->
+                <div class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-info border-left-5 border-start">
+                  <!--begin::Symbol-->
+                  <div class="symbol symbol-30px me-5 mb-8">
+                    <span class="symbol-label">
+                      <i class="ki-duotone ki-profile-user fs-2x text-info">
+                        <i class="path1"></i>
+                        <i class="path2"></i>
+                        <i class="path3"></i>
+                        <i class="path4"></i>
+                      </i>
+                    </span>
+                  </div>
+                  <!--end::Symbol-->
 
-                <!--begin::Stats-->
-                <div class="m-0">
-                  <span v-if="isLoading" class="placeholder-glow">
-                    <span class="placeholder col-6"></span>
-                  </span>
-                  <span v-else class="text-info fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                    {{ dashboardData.totalKonser }}
-                  </span>
-                  <!--begin::Desc-->
-                  <span class="text-gray-500 fw-semibold fs-6">Total Konser</span>
-                  <!--end::Desc-->
+                  <!--begin::Stats-->
+                  <div class="m-0">
+                    <span v-if="isLoading" class="placeholder-glow">
+                      <span class="placeholder col-6"></span>
+                    </span>
+                    <span v-else class="text-info fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
+                      {{ dashboardData.totalKonser }}
+                    </span>
+                    <!--begin::Desc-->
+                    <span class="text-gray-500 fw-semibold fs-6">Total Konser</span>
+                    <!--end::Desc-->
+                  </div>
+                  <!--end::Stats-->
                 </div>
-                <!--end::Stats-->
               </div>
-              <!--end::Items-->
-            </div>
-            <!--end::Col-->
-            <!--begin::Col-->
-            <div class="col-md-3">
-              <!--begin::Items-->
+            </template>
+
+            <!-- Show these cards for all users -->
+            <div :class="isMitra ? 'col-md-6' : 'col-md-3'">
+              <!-- Total Pembelian Card -->
               <div class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-success border-left-5 border-start">
                 <!--begin::Symbol-->
                 <div class="symbol symbol-30px me-5 mb-8">
@@ -271,12 +265,10 @@ onMounted(() => {
                 </div>
                 <!--end::Stats-->
               </div>
-              <!--end::Items-->
             </div>
-            <!--end::Col-->
-            <!--begin::Col-->
-            <div class="col-md-3">
-              <!--begin::Items-->
+
+            <div :class="isMitra ? 'col-md-6' : 'col-md-3'">
+              <!-- Total Pendapatan Card -->
               <div class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-success border-left-5 border-start">
                 <!--begin::Symbol-->
                 <div class="symbol symbol-30px me-5 mb-8">
@@ -301,46 +293,50 @@ onMounted(() => {
                 </div>
                 <!--end::Stats-->
               </div>
-              <!--end::Items-->
             </div>
-            <div class="col-md-3">
-              <!--begin::Items-->
-              <div class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-info border-left-5 border-start">
-                <!--begin::Symbol-->
-                <div class="symbol symbol-30px me-5 mb-8">
-                  <span class="symbol-label">
-                    <i class="ki-duotone ki-profile-user fs-2x text-info">
-                      <i class="path1"></i>
-                      <i class="path2"></i>
-                      <i class="path3"></i>
-                      <i class="path4"></i>
-                    </i>
-                  </span>
-                </div>
-                <!--end::Symbol-->
 
-                <!--begin::Stats-->
-                <div class="m-0">
-                  <span v-if="isLoading" class="placeholder-glow">
-                    <span class="placeholder col-6"></span>
-                  </span>
-                  <span v-else class="text-info fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                    {{ dashboardData.totalUsers }}
-                  </span>
-                  <!--end::Number-->
+            <!-- Show user card only for non-mitra users -->
+            <template v-if="!isMitra">
+              <div class="col-md-3">
+                <!-- Total Users Card -->
+                <div class="bg-gray-100 bg-opacity-70 rounded-2 px-6 py-5 border-info border-left-5 border-start">
+                  <!--begin::Symbol-->
+                  <div class="symbol symbol-30px me-5 mb-8">
+                    <span class="symbol-label">
+                      <i class="ki-duotone ki-profile-user fs-2x text-info">
+                        <i class="path1"></i>
+                        <i class="path2"></i>
+                        <i class="path3"></i>
+                        <i class="path4"></i>
+                      </i>
+                    </span>
+                  </div>
+                  <!--end::Symbol-->
 
-                  <!--begin::Desc-->
-                  <span class="text-gray-500 fw-semibold fs-6">Data Pengguna</span>
-                  <!--end::Desc-->
+                  <!--begin::Stats-->
+                  <div class="m-0">
+                    <span v-if="isLoading" class="placeholder-glow">
+                      <span class="placeholder col-6"></span>
+                    </span>
+                    <span v-else class="text-info fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
+                      {{ dashboardData.totalUsers }}
+                    </span>
+                    <!--end::Number-->
+
+                    <!--begin::Desc-->
+                    <span class="text-gray-500 fw-semibold fs-6">Data Pengguna</span>
+                    <!--end::Desc-->
+                  </div>
+                  <!--end::Stats-->
                 </div>
-                <!--end::Stats-->
               </div>
-              <!--end::Items-->
-            </div>
+            </template>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- Sales Chart -->
               <div class="card">
                 <div class="card-body">
+                  <h3 class="card-title">{{ isMitra ? 'Statistik Konser Anda' : 'Statistik Semua Konser' }}</h3>
                   <apexchart
                     v-if="!isLoading"
                     type="line"
