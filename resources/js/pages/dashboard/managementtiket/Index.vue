@@ -138,23 +138,27 @@ watch(openForm, (val) => {
 </script>
 
 <template>
-    <Form
-        :selected="selected"
-        @close="openForm = false"
-        v-if="openForm"
-        @refresh="refresh"
-    />
-    <div class="card">
-        <div class="card-header align-items-center">
-            <h2 class="mb-0"></h2>
-        </div>
-        <div class="card-body">
-            <paginate
-                ref="paginateRef"
-                id="table-users"
-                url="/tiket"
-                :columns="columns"
-            ></paginate>
+    <div>
+        <!-- Remove Suspense and use direct component -->
+        <Form
+            v-if="openForm"
+            :selected="selected"
+            @close="openForm = false"
+            @refresh="refresh"
+        />
+
+        <div class="card">
+            <div class="card-header align-items-center">
+                <h2 class="mb-0"></h2>
+            </div>
+            <div class="card-body">
+                <paginate
+                    ref="paginateRef"
+                    id="table-users"
+                    url="/tiket"
+                    :columns="columns"
+                ></paginate>
+            </div>
         </div>
     </div>
 </template>

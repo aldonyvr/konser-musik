@@ -47,8 +47,7 @@ const columns = [
     // }),
 
 
-    column.accessor("uuid", {
-
+    column.accessor("konser.uuid", {  
         header: "Aksi",
         cell: (cell) =>
             h("div", { class: "d-flex gap-2" }, [
@@ -112,7 +111,7 @@ watch(openForm, (val) => {
             <paginate
                 ref="paginateRef"
                 id="table-users"
-                url="/konser/index"
+                url="/konser"
                 :columns="columns"
             ></paginate>
         </div>

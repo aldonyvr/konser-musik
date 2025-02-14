@@ -46,7 +46,7 @@ const columns = [
                     badgeClass = 'badge bg-warning';
                     break;
                 default:
-                    badgeClass = 'badge bg-secondary';
+                    badgeClass = 'badge bg-danger';
             }
             return h('span', { class: badgeClass }, status);
         }

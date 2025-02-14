@@ -118,13 +118,32 @@ const goToEventDetail = (id: number) => {
   router.push(`/detail-konser/${id}`);
 };
 
+// Helper function to check if ticket data is empty/zero
+const isTicketEmpty = (event: any) => {
+  const gates = [
+    event.gate_a_capacity,
+    event.gate_b_capacity,
+    event.gate_c_capacity,
+    event.gate_d_capacity,
+    event.gate_e_capacity
+  ];
+
+  const prices = [
+    parseFloat(event.harga_regular) || 0,
+    parseFloat(event.harga_vip) || 0
+  ];
+
+  const hasZeroGates = gates.every(gate => !gate || gate === 0);
+  const hasZeroPrices = prices.every(price => price === 0);
+
+  return hasZeroGates && hasZeroPrices;
+};
+
 const upcomingConcerts = computed(() => {
   const today = new Date();
   return konser.value.filter(event => {
     const concertDate = new Date(event.konser?.tanggal);
-    const isUpcoming = concertDate > today;
-    const hasNoTickets = !event.harga_regular && !event.harga_vip && !event.reguler && !event.vip;
-    return isUpcoming && hasNoTickets;
+    return concertDate > today && isTicketEmpty(event);
   });
 });
 
@@ -132,9 +151,7 @@ const availableConcerts = computed(() => {
   const today = new Date();
   return konser.value.filter(event => {
     const concertDate = new Date(event.konser?.tanggal);
-    const isUpcoming = concertDate > today;
-    const hasTickets = event.harga_regular || event.harga_vip || event.reguler || event.vip;
-    return isUpcoming && hasTickets;
+    return concertDate > today && !isTicketEmpty(event);
   });
 });
 

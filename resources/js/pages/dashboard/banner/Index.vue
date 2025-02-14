@@ -3,10 +3,10 @@ import { h, ref, watch } from "vue";
 import { useDelete } from "@/libs/hooks";
 import Form from "./Form.vue";
 import { createColumnHelper } from "@tanstack/vue-table";
-import type { Konser } from "@/types";
+import type { Banner } from "@/types";
 import { currency } from '@/libs/utils';
 
-const column = createColumnHelper<Konser>();
+const column = createColumnHelper<Banner>();
 const paginateRef = ref<any>(null);
 const selected = ref<string>("");
 const openForm = ref<boolean>(false);
@@ -45,7 +45,7 @@ const columns = [
                     {
                         class: "btn btn-sm btn-icon btn-danger",
                         onClick: () =>
-                            deleteUser(`banner/konser/${cell.getValue()}`),
+                            deleteUser(`banner/destroy/${cell.getValue()}`),
                     },
                     h("i", { class: "la la-trash fs-2" })
                 ),

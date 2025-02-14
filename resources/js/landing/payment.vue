@@ -5,229 +5,293 @@ import KTHeader from "@/layouts/default-layout/components/header/NavbarLanding.v
 import Footer from '@/Layouts/default-layout/components/footer/Footer.vue';
 import axios from 'axios';
 
+// Router and state management
 const route = useRoute();
 const router = useRouter();
 const tickets = ref([]);
 const isLoading = ref(true);
 const paymentStatus = ref('processing');
+const paymentMessage = ref('');
+const showPaymentFailed = ref(false);
+const paymentTitle = ref('');
 
-// Function to fetch ticket details
+// Constants
+const PAYMENT_TIMEOUT = 900000; // 15 minutes in milliseconds
+const ERROR_MESSAGES = {
+  SYSTEM_ERROR: 'Terjadi kesalahan sistem. Silakan coba beberapa saat lagi.',
+  EXPIRED: 'Sesi pembayaran Anda telah berakhir. Silakan melakukan pemesanan ulang.',
+  FAILED: 'Mohon maaf, pembayaran Anda gagal diproses. Silakan coba lagi.',
+  NETWORK_ERROR: 'Koneksi terputus. Periksa koneksi internet Anda dan coba lagi.'
+};
+
+// Fetch ticket details
 const fetchTickets = async (orderId: string) => {
-    try {
-        const response = await axios.get(`/datapemesanan/show/${orderId}`);
-        tickets.value = response.data;
-        isLoading.value = false;
-    } catch (error) {
-        console.error('Error fetching tickets:', error);
-        isLoading.value = false;
-    }
+  try {
+    const response = await axios.get(`/datapemesanan/show/${orderId}`);
+    tickets.value = response.data;
+  } catch (error) {
+    console.error('Error fetching tickets:', error);
+    showPaymentError(
+      'Gagal Memuat Data',
+      'Tidak dapat memuat detail tiket. Silakan muat ulang halaman.'
+    );
+  } finally {
+    isLoading.value = false;
+  }
 };
 
-const handlePaymentUpdate = async (result) => {
-    try {
-        // Send payment result to backend
-        await axios.post('datapemesan/payment-callback', {
-            order_id: route.query.order_id,
-            transaction_status: result.transaction_status,
-            fraud_status: result.fraud_status
-        });
-
-        console.log('Payment status updated:', result);
-    } catch (error) {
-        console.error('Error updating payment status:', error);
-    }
-};
-
-onMounted(() => {
-    const token = route.query.token as string;
-    const orderId = route.query.order_id as string;
-
-    if (!token) {
-        router.push('/');
-        return;
-    }
-
-    // Initialize Midtrans payment
-    window.snap.pay(token, {
-        onSuccess: async function (result) {
-            paymentStatus.value = 'success';
-            try {
-                await handlePaymentUpdate(result);
-                // Add delay before redirect to ensure data is processed
-                setTimeout(() => {
-                    router.push({ 
-                        name: 'riwayat-konser',  // Make sure this matches your route name
-                        params: { tab: 'tickets' }
-                    });
-                }, 1500);
-            } catch (error) {
-                console.error('Error processing payment:', error);
-            }
-        },
-        onPending: async function (result) {
-            paymentStatus.value = 'pending';
-            await handlePaymentUpdate(result);
-            alert('Pembayaran pending. Silahkan selesaikan pembayaran Anda.');
-            router.push('/invoice/' + orderId);
-        },
-        onError: async function (result) {
-            paymentStatus.value = 'error';
-            await handlePaymentUpdate(result);
-            alert('Pembayaran gagal.');
-            console.error('Payment Error:', result);
-            router.push('/payment');
-        },
-        onClose: function () {
-            if (paymentStatus.value !== 'success') {
-                alert('Anda menutup jendela pembayaran sebelum menyelesaikan pembayaran.');
-                router.push('/payment');
-            }
-        }
+// Handle payment status updates
+const handlePaymentUpdate = async (result: any, status: string) => {
+  try {
+    await axios.post('datapemesan/payment-callback', {
+      order_id: route.query.order_id,
+      transaction_status: status === 'success' ? 'settlement' : 
+                         status === 'pending' ? 'pending' : 'expire',
+      fraud_status: status === 'success' ? 'accept' : 'deny'
     });
+
+    paymentStatus.value = status;
+
+    if (status === 'success') {
+      await fetchTickets(route.query.order_id as string);
+    } else if (status === 'error' || status === 'failed') {
+      showPaymentError(
+        'Pembayaran Gagal',
+        ERROR_MESSAGES.FAILED
+      );
+    }
+  } catch (error) {
+    console.error('Error updating payment:', error);
+    showPaymentError(
+      'Kesalahan Sistem',
+      ERROR_MESSAGES.SYSTEM_ERROR
+    );
+  }
+};
+
+// Handle expired payments
+const handlePaymentExpired = async (orderId: string) => {
+  try {
+    await Promise.all([
+      axios.post('datapemesan/payment-callback', {
+        order_id: orderId,
+        transaction_status: 'expire',
+        fraud_status: 'deny'
+      }),
+      axios.post('datapemesan/handle-expired-payment', {
+        order_id: orderId
+      })
+    ]);
+
+    showPaymentError(
+      'Waktu Pembayaran Habis',
+      ERROR_MESSAGES.EXPIRED
+    );
+  } catch (error) {
+    console.error('Error handling expired payment:', error);
+    showPaymentError(
+      'Kesalahan Sistem',
+      ERROR_MESSAGES.SYSTEM_ERROR
+    );
+  }
+};
+
+// Show payment error with animation
+const showPaymentError = (title: string, message: string) => {
+  paymentStatus.value = 'failed';
+  showPaymentFailed.value = true;
+  
+  // Animate the error message appearance
+  setTimeout(() => {
+    paymentTitle.value = title;
+    paymentMessage.value = message;
+  }, 300);
+};
+
+// Navigate to retry payment
+const retryPayment = () => {
+  router.push('/');
+};
+
+// Component setup
+onMounted(() => {
+  const token = route.query.token as string;
+  const orderId = route.query.order_id as string;
+
+  if (!token || !orderId) {
+    router.push('/');
+    return;
+  }
+
+  // Payment timeout handler
+  const paymentTimeout = setTimeout(() => {
+    if (['processing', 'pending'].includes(paymentStatus.value)) {
+      handlePaymentExpired(orderId);
+    }
+  }, PAYMENT_TIMEOUT);
+
+  // Initialize Midtrans payment
+  window.snap.pay(token, {
+    onSuccess: async (result) => {
+      clearTimeout(paymentTimeout);
+      await handlePaymentUpdate(result, 'success');
+      router.push({ name: 'riwayat-konser', params: { tab: 'tickets' }});
+    },
+    onPending: async (result) => {
+      await handlePaymentUpdate(result, 'pending');
+    },
+    onError: async (result) => {
+      clearTimeout(paymentTimeout);
+      await handlePaymentUpdate(result, 'error');
+    },
+    onClose: async () => {
+      clearTimeout(paymentTimeout);
+      if (['processing', 'pending'].includes(paymentStatus.value)) {
+        await handlePaymentExpired(orderId);
+      }
+    }
+  });
+
+  // Cleanup
+  return () => {
+    clearTimeout(paymentTimeout);
+  };
 });
 </script>
 
 <template>
-    <div>
-        <nav>
-            <KTHeader />
-        </nav>
-        <div class="container mt-20">
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <!-- Loading State -->
-                    <div v-if="isLoading" class="payment-loading text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <h3 class="mt-3">Memuat halaman pembayaran...</h3>
-                        <p>Mohon tunggu sebentar</p>
-                    </div>
+  <div class="payment-page min-h-screen bg-gray-50">
+    <nav>
+      <KTHeader />
+    </nav>
 
-                    <!-- Success State with Tickets -->
-                    <div v-else-if="paymentStatus === 'success'" class="payment-success">
-                        <div class="success-header text-center mb-4">
-                            <div class="success-icon">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <h2>Pembayaran Berhasil!</h2>
-                        </div>
+    <main class="container mx-auto px-4 py-12 mt-20">
+      <div class="max-w-2xl mx-auto">
+        <!-- Payment Failed State -->
+        <div 
+          v-if="showPaymentFailed"
+          class="payment-failed  rounded-xl shadow-lg p-8 text-center transform transition-all duration-300"
+        >
+          <div class="error-icon mb-6 animate-bounce">
+            <i class="fas fa-exclamation-circle text-red-500 text-6xl"></i>
+          </div>
 
+          <h2 class="text-2xl font-bold mb-4 text-gray-800">
+            {{ paymentTitle }}
+          </h2>
 
-                    </div>
-                </div>
-            </div>
+          <p class="text-gray-600 text-lg mb-8">
+            {{ paymentMessage }}
+          </p>
+
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button 
+              @click="retryPayment"
+              class="btn btn-primary me-2 flex items-center justify-center gap-2"
+            >
+              <i class="fas fa-shopping-cart"></i>
+              <span>Pesan Ulang</span>
+            </button>
+
+            <button 
+              @click="() => router.push('/riwayat-konser')"
+              class="btn btn-secondary flex items-center justify-center gap-2"
+            >
+              <i class="fas fa-history"></i>
+              <span>Lihat Riwayat</span>
+            </button>
+          </div>
+
+          <p class="mt-8 text-sm text-gray-500">
+            Butuh bantuan? 
+            <a href="/contact" class="text-blue-600 hover:text-blue-700">
+              Hubungi kami
+            </a>
+          </p>
         </div>
-        <Footer />
-    </div>
+
+        <!-- Loading State -->
+        <div 
+          v-else-if="isLoading || paymentStatus === 'processing'"
+          class="loading-state bg-white rounded-xl shadow-lg p-8 text-center"
+        >
+          <div class="loading-spinner mb-6">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-50 mx-auto"></div>
+          </div>
+
+          <h3 class="text-xl font-semibold mb-2">
+            Memproses Pembayaran
+          </h3>
+
+          <p class="text-gray-600">
+            Mohon tunggu sebentar, jangan tutup halaman ini
+          </p>
+        </div>
+
+        <!-- Success State -->
+        <div 
+          v-else-if="paymentStatus === 'success'"
+          class="success-state bg-white rounded-xl shadow-lg p-8"
+        >
+          <div class="text-center mb-8">
+            <div class="success-icon mb-4">
+              <i class="fas fa-check-circle text-green-500 text-6xl"></i>
+            </div>
+
+            <h2 class="text-2xl font-bold text-gray-800">
+              Pembayaran Berhasil!
+            </h2>
+          </div>
+
+          <!-- Ticket display would go here -->
+        </div>
+      </div>
+    </main>
+
+    <Footer />
+  </div>
 </template>
 
 <style scoped>
-.payment-loading {
-    margin-top: 100px;
-    margin-bottom: 100px;
-    padding: 40px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+.payment-failed {
+  opacity: 0;
+  animation: fadeInScale 0.5s ease-out forwards;
 }
 
-.spinner-border {
-    width: 3rem;
-    height: 3rem;
+
+.loading-spinner {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-.payment-success {
-    margin: 2rem 0;
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.success-icon {
-    font-size: 4rem;
-    color: #28a745;
-    margin-bottom: 1rem;
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
-.ticket-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.ticket-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    overflow: hidden;
-    transition: transform 0.2s;
-}
-
-.ticket-card:hover {
-    transform: translateY(-2px);
-}
-
-.ticket-header {
-    background: #f8f9fa;
-    padding: 1rem;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.ticket-header h3 {
-    margin: 0;
-    color: #333;
-}
-
-.ticket-type {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    background: #e9ecef;
-    border-radius: 20px;
-    font-size: 0.875rem;
-    margin-top: 0.5rem;
-}
-
-.ticket-body {
-    padding: 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.ticket-info p {
-    margin-bottom: 0.5rem;
-}
-
-.ticket-qr {
-    width: 120px;
-    height: 120px;
-    padding: 0.5rem;
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-}
-
-.ticket-qr img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.ticket-footer {
-    padding: 1rem;
-    background: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-}
-
+/* Print styles */
 @media print {
-    .ticket-card {
-        break-inside: avoid;
-        margin-bottom: 2rem;
-    }
+  .payment-page {
+    background: white;
+  }
 
-    nav, .ticket-footer, Footer {
-        display: none;
-    }
+  nav, .btn-primary, .btn-secondary, Footer {
+    display: none;
+  }
 }
 </style>

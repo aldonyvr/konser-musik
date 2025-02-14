@@ -208,7 +208,9 @@ const generateBarcode = (data: string) => {
             <div v-else-if="activeTickets.length > 0" class="tickets-wrapper">
                 <div v-for="ticket in activeTickets" :key="ticket.id" class="mb-8">
                     <!-- Downloadable Ticket -->
-                    <div :id="`ticket-${ticket.id}`" class="ticket-full">
+                    <div :id="`ticket-${ticket.id}`" 
+                         class="ticket-full"
+                         :class="{'ticket-vip': ticket.gate === 'VIP', 'ticket-regular': ticket.gate !== 'VIP'}">
                         <!-- Left Section -->
                         <div class="ticket-left">
                             <div class="event-details flex items-center gap-4">
@@ -236,7 +238,11 @@ const generateBarcode = (data: string) => {
                             <div class="ticket-details">
                                 <div class="detail-row">
                                     <span class="detail-label">Gate</span>
-                                    <span class="detail-value">{{ ticket.gate || 'VIP' }}</span>
+                                    <span class="detail-value">
+                                        <span class="gate-badge" :class="{'gate-vip': ticket.gate === 'VIP', 'gate-regular': ticket.gate !== 'VIP'}">
+                                            {{ ticket.gate || 'VIP' }}
+                                        </span>
+                                    </span>
                                 </div>
                                 <!-- Only show seat for VIP tickets -->
                                 <template v-if="ticket.gate === 'VIP'">
@@ -253,7 +259,7 @@ const generateBarcode = (data: string) => {
                         </div>
 
                         <!-- Right Section -->
-                        <div class="ticket-right">
+                        <div class="ticket-right" :class="{'vip-border': ticket.gate === 'VIP', 'regular-border': ticket.gate !== 'VIP'}">
                             <div class="qrcode-section">
                                 <img :src="ticket.qrcode" 
                                      alt="QR Code" 
@@ -277,8 +283,9 @@ const generateBarcode = (data: string) => {
             </div>
 
             <!-- No Active Tickets Message -->
-            <div v-else class="text-center text-muted mt-5">
-                <p class="lead">Anda tidak memiliki tiket konser yang aktif.</p>
+            <div v-else class="text-center text-muted mt-5 ">
+                <p class="lead ">Anda tidak memiliki tiket konser yang aktif.</p>
+                <div class="p-15"></div>
             </div>
         </div>
 
@@ -289,12 +296,13 @@ const generateBarcode = (data: string) => {
             </div>
 
             <!-- No History Message -->
-            <div v-if="historyTickets.length === 0" class="text-center text-muted mt-5">
-                <p class="lead">Tidak ada riwayat pembelian tiket konser ditemukan.</p>
+            <div v-if="historyTickets.length === 0" class="text-center text-muted mt-5 mb-20">
+                <p class="lead ">Tidak ada riwayat pembelian tiket konser ditemukan.</p>
+                <div class="p-5"></div>
             </div>
 
             <!-- History List -->
-            <div v-else class="row mt-15 mb-20">
+            <div v-else class="row mt-15 mb-20 ">
                 <div v-for="ticket in historyTickets" :key="ticket.id" class="col-md-6 mb-7">
                     <div class="card shadow-lg hover-shadow">
                         <div class="row g-0">
@@ -343,11 +351,49 @@ const generateBarcode = (data: string) => {
 
 .ticket-full {
     display: flex;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border-radius: 10px;
     margin-bottom: 2rem;
     position: relative;
+    overflow: hidden;
+}
 
+.ticket-vip {
+    background: linear-gradient(135deg, #fff6e6 0%, #fff 100%);
+    border: 2px solid #ffd700;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.15);
+}
+
+.ticket-regular {
+    background: linear-gradient(135deg, #e6f3ff 0%, #fff 100%);
+    border: 2px solid #007bff;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.15);
+}
+
+.gate-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.gate-vip {
+    background: linear-gradient(135deg, #ffd700 0%, #ffeb3b 100%);
+    color: #000;
+    border: 1px solid #ffd700;
+}
+
+.gate-regular {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border: 1px solid #007bff;
+}
+
+.vip-border {
+    border-left: 2px dashed #ffd700;
+}
+
+.regular-border {
+    border-left: 2px dashed #007bff;
 }
 
 .ticket-left {
@@ -366,7 +412,40 @@ const generateBarcode = (data: string) => {
     justify-content: space-between;
     align-items: center;
     position: relative;
-    border-left: 2px dashed #dee2e6;
+}
+
+.ticket-right::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -12px;
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border-radius: 50%;
+    transform: translateY(-50%);
+}
+
+.ticket-right::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -12px;
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border-radius: 50%;
+    transform: translateY(50%);
+}
+
+.ticket-vip .ticket-right::before,
+.ticket-vip .ticket-right::after {
+    border: 2px solid #ffd700;
+}
+
+.ticket-regular .ticket-right::before,
+.ticket-regular .ticket-right::after {
+    border: 2px solid #007bff;
 }
 
 .event-details {
@@ -377,6 +456,25 @@ const generateBarcode = (data: string) => {
     flex: 1;
     border-left: 1px solid #dee2e6;
     padding-left: 2rem;
+    position: relative;
+}
+
+.ticket-details::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -1rem;
+    width: 2rem;
+    height: 2rem;
+    transform: translateY(-50%) rotate(45deg);
+}
+
+.ticket-vip .ticket-details::after {
+    background: linear-gradient(135deg, #fff6e6 0%, #fff 100%);
+}
+
+.ticket-regular .ticket-details::after {
+    background: linear-gradient(135deg, #e6f3ff 0%, #fff 100%);
 }
 
 .event-image {
@@ -476,6 +574,11 @@ const generateBarcode = (data: string) => {
     .ticket-right {
         border-left: none;
         border-top: 2px dashed #dee2e6;
+    }
+
+    .ticket-right::before,
+    .ticket-right::after {
+        display: none;
     }
 }
 

@@ -20,13 +20,8 @@ class BannerController extends Controller
 
         if ($request->search) {
             $query->where(function ($q) use ($request) {
-                $q->where('title', 'like', "%{$request->search}%")
-                  ->orWhere('deskripsi', 'like', "%{$request->search}%")
-                  ->orWhere('lokasi', 'like', "%{$request->search}%");
+                $q->where('title', 'like', "%{$request->search}%");
             });
-        }
-        if ($request->kota) {
-            $query->where('lokasi', $request->kota);
         }
         DB::statement('set @no=0+' . $page * $per);
         $data = $query->latest()
@@ -67,9 +62,6 @@ class BannerController extends Controller
         ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show($uuid)
     {
         $banner = Banner::findByUuid($uuid);
@@ -79,9 +71,6 @@ class BannerController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit($uuid)
     {
         $banner = Banner::findByUuid($uuid);
@@ -96,18 +85,32 @@ class BannerController extends Controller
      */
     public function update(Request $request, $uuid)
     {
-        $banner = Banner::findByUuid($uuid);
-        if ($banner) {
-            $banner->update($request->all());
+        try {
+            $banner = Banner::findByUuid($uuid);
+            $req = $request->validate([
+                'image' => 'nullable|file|mimes:jpg,png,jpeg|max:2048',
+            ]);
+
+            if ($request->hasFile('image')) {
+                $req['image'] = $request->file('image')->store('media', 'public');
+            }
+
+            $banner->update([
+                'image' => "/storage/".$req['image']
+            ]);
+
             return response()->json([
-                'status' => 'true',
-                'message' => 'Banner berhasil diubah'
+                'success' => true,
+                'message' => 'Banner berhasil diupdate',
+                'data' => $banner
             ]);
-        } else {
-            return response([
-                'message' => 'gagal mengubah'
-            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating banner: ' . $e->getMessage()
+            ], 500);
         }
+       
     }
 
     /**
@@ -115,18 +118,39 @@ class BannerController extends Controller
      */
     public function destroy($uuid)
     {
-        $banner = Banner::findByUuid($uuid);
-        if ($banner) {
-            unlink("storage/" . $banner->image);
+        try {
+            DB::beginTransaction();
+            
+            $banner = Banner::where('uuid', $uuid)->first();
+            
+            if (!$banner) {
+                throw new \Exception('Banner tidak ditemukan');
+            }
+
+            // Remove image file if exists
+            $imagePath = str_replace('/storage/', '', $banner->image);
+            if (\Storage::disk('public')->exists($imagePath)) {
+                \Storage::disk('public')->delete($imagePath);
+            }
+
+            // Delete the banner record
             $banner->delete();
-            return response()->json([   
-                'message' => "Banner successfully deleted",
-                'code' => 200
+            
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Banner berhasil dihapus'
             ]);
-        } else {
-            return response([
-                'message' => "Failed delete data $uuid / data doesn't exists"
-            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Banner delete error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus banner: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

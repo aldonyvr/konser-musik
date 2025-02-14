@@ -204,63 +204,47 @@ class DataPemesananController extends Controller
             
             $orderId = $request->order_id;
             $transactionStatus = $request->transaction_status;
+            $fraudStatus = $request->fraud_status;
 
             \Log::info('Payment callback received:', [
                 'order_id' => $orderId,
-                'status' => $transactionStatus
+                'status' => $transactionStatus,
+                'fraud_status' => $fraudStatus
             ]);
 
-            $pemesanan = DataPemesanan::where('order_id', $orderId)
-                ->with('tiket')
-                ->get();
+            $pemesanan = DataPemesanan::where('order_id', $orderId)->get();
             
             if ($pemesanan->isEmpty()) {
                 throw new \Exception('Order not found: ' . $orderId);
             }
 
+            // Handle all types of failed/expired transactions
+            $failedStatuses = ['expire', 'cancel', 'deny', 'failure'];
+            $isExpired = in_array($transactionStatus, $failedStatuses);
+
             foreach ($pemesanan as $ticket) {
-                if ($transactionStatus == 'capture' || $transactionStatus == 'settlement') {
+                if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
                     $ticket->status_pembayaran = 'Successfully';
-                    
-                    // Update ticket stock
-                    $tiket = $ticket->tiket;
-                    if ($tiket) {
-                        // Check gate type and update corresponding capacity
-                        if ($ticket->gate) {
-                            $gateField = 'gate_' . strtolower(substr($ticket->gate, -1)) . '_capacity';
-                            if (isset($tiket->$gateField)) {
-                                $tiket->$gateField = max(0, $tiket->$gateField - 1);
-                                $tiket->reguler = max(0, $tiket->reguler - 1); // Update regular ticket count
-                                \Log::info('Updated regular ticket stock:', [
-                                    'tiket_id' => $tiket->id,
-                                    'gate' => $ticket->gate,
-                                    'new_capacity' => $tiket->$gateField
-                                ]);
-                            }
-                        } else {
-                            // VIP ticket
-                            $tiket->vip = max(0, $tiket->vip - 1);
-                            \Log::info('Updated VIP ticket stock:', [
-                                'tiket_id' => $tiket->id,
-                                'remaining_vip' => $tiket->vip
-                            ]);
-                        }
-                        
-                        $tiket->save();
-                    }
-                } else if ($transactionStatus == 'pending') {
-                    $ticket->status_pembayaran = 'Pending';
-                } else if (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
+                    $this->updateTicketStock($ticket);
+                } else if ($isExpired || $fraudStatus == 'deny') {
                     $ticket->status_pembayaran = 'Failed';
+                } else if ($transactionStatus == 'pending' && !$isExpired) {
+                    $ticket->status_pembayaran = 'Pending';
                 }
-                
+
                 $ticket->save();
+                \Log::info('Updated payment status:', [
+                    'ticket_id' => $ticket->id,
+                    'status' => $ticket->status_pembayaran,
+                    'transaction_status' => $transactionStatus
+                ]);
             }
 
             DB::commit();
             return response()->json([
                 'success' => true,
-                'message' => 'Payment and stock updated successfully'
+                'message' => 'Payment status updated',
+                'status' => $pemesanan->first()->status_pembayaran
             ]);
 
         } catch (\Exception $e) {
@@ -271,5 +255,60 @@ class DataPemesananController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    // Add new method to handle expired payments
+    public function handleExpiredPayment(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            $orderId = $request->order_id;
+            $tickets = DataPemesanan::where('order_id', $orderId)
+                                   ->where('status_pembayaran', 'Pending')
+                                   ->get();
+
+            foreach ($tickets as $ticket) {
+                $ticket->status_pembayaran = 'Failed';
+                $ticket->save();
+            }
+
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment marked as failed due to expiration'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error handling expired payment: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function updateTicketStock($ticket)
+    {
+        if (!$ticket->tiket) return;
+
+        if ($ticket->gate) {
+            $gateField = 'gate_' . strtolower(substr($ticket->gate, -1)) . '_capacity';
+            if (isset($ticket->tiket->$gateField)) {
+                $ticket->tiket->$gateField = max(0, $ticket->tiket->$gateField - 1);
+                $ticket->tiket->reguler = max(0, $ticket->tiket->reguler - 1);
+            }
+        } else {
+            $ticket->tiket->vip = max(0, $ticket->tiket->vip - 1);
+        }
+        
+        $ticket->tiket->save();
+    }
+
+    private function releaseReservedTickets($ticket)
+    {
+        // Optionally implement logic to release reserved tickets
+        // This could be useful if you're reserving tickets during checkout
     }
 }

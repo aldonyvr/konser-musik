@@ -79,8 +79,8 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
 
         Route::prefix('konser')->group(function () {
             Route::post('get', [KonserController::class, 'get'])->withoutMiddleware(['auth', 'verified']);
+            Route::post('', [KonserController::class, 'index'])->withoutMiddleware(['auth', 'verified']);
             Route::get('', [KonserController::class, 'index'])->withoutMiddleware(['auth', 'verified']);
-            Route::post('index', [KonserController::class, 'index'])->withoutMiddleware(['auth', 'verified']);
             Route::post('show', [KonserController::class, 'show']);
             Route::get('edit/{uuid}', [KonserController::class, 'edit'])->withoutMiddleware(['auth', 'verified']);
             Route::post('update/{uuid}', [KonserController::class, 'update']);
@@ -91,11 +91,13 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
         });
         Route::prefix('tiket')->group(function () {
             Route::get('get', [TiketController::class, 'get'])->withoutMiddleware(['auth', 'verified']);
-            Route::post('', [TiketController::class, 'index']);
+            Route::post('', [TiketController::class, 'index'])->withoutMiddleware(['auth', 'verified']);
             Route::get('edit/{uuid}', [TiketController::class, 'edit'])->withoutMiddleware(['auth', 'verified']);
             Route::get('show/{uuid}', [TiketController::class, 'show'])->withoutMiddleware(['auth', 'verified']);
             Route::post('store', [TiketController::class, 'store']);
-            Route::post('update/{uuid}', [TiketController::class, 'update']);
+            Route::post('update/{uuid}', [TiketController::class, 'update'])
+                ->withoutMiddleware(['auth', 'verified'])
+                ->name('tiket.update');
             // Route::apiResource('tiket', TiketController::class)
             //     ->except(['index', 'store']);
         });
@@ -108,8 +110,9 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
             Route::get('', [BannerController::class, 'get'])->withoutMiddleware(['auth', 'verified']);
             Route::post('', [BannerController::class, 'index']);
             Route::post('show', [BannerController::class, 'show']);
-            Route::get('edit/{uuid}', [BannerController::class, 'edit']);
-            Route::post('update/{uuid}', [BannerController::class, 'update']);
+            Route::get('edit/{uuid}', [BannerController::class, 'edit'])->withoutMiddleware(['auth', 'verified']);
+            Route::post('update/{uuid}', [BannerController::class, 'update'])->withoutMiddleware(['auth', 'verified']);
+            Route::delete('destroy/{uuid}', [BannerController::class, 'destroy'])->withoutMiddleware(['auth', 'verified']);
             Route::post('store', [BannerController::class, 'store']);
             Route::apiResource('banner', BannerController::class)
                 ->except(['index', 'store']);
@@ -125,6 +128,7 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
             Route::post('store', [DataPemesananController::class, 'store'])->withoutMiddleware(['auth', 'verified']);
             Route::get('/purchased-tickets', [DataPemesananController::class, 'getPurchasedTickets'])->name('purchased-tickets')->withoutMiddleware(['auth', 'verified']);
             Route::post('/payment-callback', [DataPemesananController::class, 'handlePaymentCallback'])->name('payment-callback')->withoutMiddleware(['auth', 'verified']);
+            Route::post('/handle-expired-payment', [DataPemesananController::class, 'handleExpiredPayment']);
         });
         Route::prefix('scan')->group(function () {
             Route::post('/scan-ticket', [ScannerController::class, 'scanTicket']);

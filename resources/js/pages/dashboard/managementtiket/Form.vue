@@ -6,7 +6,8 @@ import axios from "@/libs/axios";
 import { toast } from "vue3-toastify";
 import type { User } from "@/types";
 import ApiService from "@/core/services/ApiService";
-import { Field, Form as VForm, ErrorMessage } from 'vee-validate';
+import { Field, Form as VForm, ErrorMessage } from 'vee-validate'; 
+import DatePicker from '@/components/DatePicker.vue'; 
 
 const props = defineProps({
     selected: {
@@ -16,8 +17,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["close", "refresh"]);
+const formRef = ref();
 
-const user = ref<User>({
+// Initialize form data
+const formData = ref({
     konser: {
         title: '',
         tiket_tersedia: '',
@@ -28,26 +31,19 @@ const user = ref<User>({
     reguler: '',
     opengate: '',
     closegate: '',
-    gate_a_regular: '',
-    gate_b_regular: '',
-    gate_c_regular: '',
-    gate_d_regular: '',
-    gate_e_regular: '',
+    gate_a_capacity: '',
+    gate_b_capacity: '',
+    gate_c_capacity: '',
+    gate_d_capacity: '',
+    gate_e_capacity: '',
 });
-
-const formRef = ref();
 
 // Form validation schema
 const formSchema = Yup.object().shape({
-    // konser_title: Yup.string().required('Nama Konser wajib diisi'),
-    // konser_tiket_tersedia: Yup.number().required('Total tiket wajib diisi'),
     vip: Yup.number().required('Tiket VIP wajib diisi'),
     reguler: Yup.number().required('Tiket Reguler wajib diisi'),
     harga_vip: Yup.number().required('Harga Tiket VIP wajib diisi'),
     harga_regular: Yup.number().required('Harga Tiket Reguler wajib diisi'),
-    opengate: Yup.string().required('Open Gate wajib diisi'),
-    closegate: Yup.string().required('Close Gate wajib diisi'),
-
 });
 
 function getEdit() {
@@ -56,9 +52,19 @@ function getEdit() {
     block(document.getElementById("form-user"));
     ApiService.get(`/tiket/edit/${props.selected}`)
         .then(({ data }) => {
-            user.value = data.data;
+            if (data.success && data.data) {
+                formData.value = {
+                    ...data.data,
+                    konser: data.data.konser || {
+                        title: '',
+                        tiket_tersedia: ''
+                    }
+                };
+                console.log('Loaded ticket data:', formData.value);
+            }
         })
         .catch((err: any) => {
+            console.error('Error loading ticket:', err);
             toast.error(err.response?.data?.message || 'Terjadi kesalahan');
         })
         .finally(() => {
@@ -67,44 +73,43 @@ function getEdit() {
 }
 
 function submit() {
-    const formData = new FormData();
-    formData.append("tiket_tersedia", user.value.konser.tiket_tersedia);
-    formData.append("harga_vip", user.value.harga_vip);
-    formData.append("harga_regular", user.value.harga_regular);
-    formData.append("vip", user.value.vip);
-    formData.append("reguler", user.value.reguler);
-    formData.append("opengate", user.value.opengate);
-    formData.append("closegate", user.value.closegate);
-    formData.append("gate_a_capacity", user.value.gate_a_capacity);
-    formData.append("gate_b_capacity", user.value.gate_b_capacity);
-    formData.append("gate_c_capacity", user.value.gate_c_capacity);
-    formData.append("gate_d_capacity", user.value.gate_d_capacity);
-    formData.append("gate_e_capacity", user.value.gate_e_capacity);
+    // Validate if the required fields are filled
+    if (!formData.value.opengate || !formData.value.closegate) {
+        toast.error('Open Gate dan Close Gate harus diisi');
+        return;
+    }
+
+    const submitData = new FormData();
+    
+    // Add ticket data
+    Object.entries(formData.value).forEach(([key, value]) => {
+        if (key !== 'konser' && value !== null && value !== undefined) {
+            submitData.append(key, value.toString());
+        }
+    });
 
     block(document.getElementById("form-user"));
     
+    // Fix the URL to match the route
     const url = props.selected
         ? `/tiket/update/${props.selected}`
         : "/tiket/store";
 
-    axios({
-        method: "post",
-        url,
-        data: formData,
-        headers: {
-            "Content-Type": "multipart/form-data",
-        },
-    })
-        .then(() => {
-            emit("close");
-            emit("refresh");
-            toast.success("Data berhasil disimpan");
-            formRef.value?.resetForm();
-        })
-        .catch((err: any) => {
-            if (formRef.value && err.response?.data?.errors) {
-                formRef.value.setErrors(err.response.data.errors);
+    console.log('Submitting to:', url, submitData); // Add logging
+
+    axios.post(url, submitData)
+        .then((response) => {
+            console.log('Response:', response.data); // Add logging
+            if (response.data.success) {
+                toast.success("Data berhasil disimpan");
+                emit("refresh");
+                emit("close");
+            } else {
+                throw new Error(response.data.message);
             }
+        })
+        .catch((err) => {
+            console.error('Error saving ticket:', err);
             toast.error(err.response?.data?.message || 'Terjadi kesalahan');
         })
         .finally(() => {
@@ -144,246 +149,228 @@ watch(
             </button>
         </div>
         <div class="card-body">
-            <div class="row">
+            <!-- Basic Information -->
+            <div class="row mb-6">
                 <div class="col-md-6">
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Nama Konser
-                        </label>
-                        <Field 
-                            class="form-control form-control-lg form-control-solid" 
+                        <label class="form-label fw-bold fs-6">Nama Konser</label>
+                        <input 
                             type="text" 
-                            name="konser.title"
-                            v-model="user.konser.title" 
-                            placeholder="Nama Konser" 
+                            class="form-control form-control-solid" 
+                            :value="formData.konser?.title"
+                            disabled
                         />
-                        <div class="fv-plugins-message-container">
-                            <div class="fv-help-block">
-                                <ErrorMessage name="konser.title" />
-                            </div>
-                        </div>
                     </div>
                 </div>
+                
                 <div class="col-md-6">
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Total Jumlah Tiket 
-                        </label>
-                        <Field 
-                            class="form-control form-control-lg form-control-solid" 
-                            type="number" 
-                            name="konser.tiket_tersedia"
-                            v-model="user.konser.tiket_tersedia" 
-                            placeholder="Total Jumlah Tiket" 
+                        <label class="form-label fw-bold fs-6">Total Tiket</label>
+                        <input 
+                            type="text" 
+                            class="form-control form-control-solid" 
+                            :value="formData.konser?.tiket_tersedia"
+                            disabled
                         />
-                        <div class="fv-plugins-message-container">
-                            <div class="fv-help-block">
-                                <ErrorMessage name="konser.tiket_tersedia" />
-                            </div>
-                        </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+            </div>
+
+            <!-- Ticket Types -->
+            <div class="row mb-6">
+                <div class="col-md-6">
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Tiket VIP
-                        </label>
+                        <label class="form-label fw-bold fs-6 required">Tiket VIP</label>
                         <Field 
-                            class="form-control form-control-lg form-control-solid" 
                             type="number" 
+                            class="form-control form-control-lg"
                             name="vip"
-                            v-model="user.vip" 
-                            placeholder="Tiket VIP" 
+                            v-model="formData.vip"
                         />
                         <div class="fv-plugins-message-container">
-                            <div class="fv-help-block">
-                                <ErrorMessage name="vip" />
-                            </div>
+                            <ErrorMessage name="vip" class="fv-help-block" />
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                
+                <div class="col-md-6">
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Tiket REGULER
-                        </label>
+                        <label class="form-label fw-bold fs-6 required">Tiket Regular</label>
                         <Field 
-                            class="form-control form-control-lg form-control-solid" 
                             type="number" 
+                            class="form-control form-control-lg"
                             name="reguler"
-                            v-model="user.reguler" 
-                            placeholder="Tiket REGULER" 
+                            v-model="formData.reguler"
                         />
                         <div class="fv-plugins-message-container">
-                            <div class="fv-help-block">
-                                <ErrorMessage name="reguler" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Open Gate
-                        </label>
-                        <Field name="opengate" class="form-control form-control-lg form-control-solid" v-model="user.opengate">
-                            <date-picker 
-                                v-model="user.opengate" 
-                                placeholder="Open Gate" 
-                                :config="{
-                                    enableTime: true,
-                                    noCalendar: true,
-                                    format: 'H:i'
-                                }" 
-                            />
-                        </Field>
-                        <div class="fv-plugins-message-container">
-                            <div class="fv-help-block">
-                                <ErrorMessage name="opengate" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Close Gate
-                        </label>
-                        <Field name="closegate" class="form-control form-control-lg form-control-solid" v-model="user.closegate">
-                            <date-picker 
-                                v-model="user.closegate" 
-                                placeholder="Close Gate" 
-                                :config="{
-                                    enableTime: true,
-                                    noCalendar: true,
-                                    format: 'H:i'
-                                }" 
-                            />
-                        </Field>
-                        <div class="fv-plugins-message-container">
-                            <div class="fv-help-block">
-                                <ErrorMessage name="closegate" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Harga Tiket VIP
-                        </label>
-                        <Field 
-                            class="form-control form-control-lg form-control-solid" 
-                            type="number" 
-                            name="harga_vip"
-                            v-model="user.harga_vip" 
-                            placeholder="Harga Tiket VIP" 
-                        />
-                        <div class="fv-plugins-message-container">
-                            <div class="fv-help-block">
-                                <ErrorMessage name="harga_vip" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
-                            Harga Tiket Regular
-                        </label>
-                        <Field 
-                            class="form-control form-control-lg form-control-solid" 
-                            type="number" 
-                            name="harga_regular"
-                            v-model="user.harga_regular" 
-                            placeholder="Harga Tiket Regular" 
-                        />
-                        <div class="fv-plugins-message-container">
-                            <div class="fv-help-block">
-                                <ErrorMessage name="harga_regular" />
-                            </div>
+                            <ErrorMessage name="reguler" class="fv-help-block" />
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Gate Times -->
+            <div class="row mb-6">
+                <div class="col-md-6">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6 required">Open Gate</label>
+                        <Field name="opengate">
+                            <DatePicker
+                                v-model="formData.opengate"
+                                :config="{
+                                    enableTime: true,
+                                    noCalendar: true,
+                                    dateFormat: 'H:i',
+                                }"
+                                class="form-control"
+                            />
+                        </Field>
+                        <div class="fv-plugins-message-container">
+                            <ErrorMessage name="opengate" class="fv-help-block" />
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6 required">Close Gate</label>
+                        <Field name="closegate">
+                            <DatePicker
+                                v-model="formData.closegate"
+                                :config="{
+                                    enableTime: true,
+                                    noCalendar: true,
+                                    dateFormat: 'H:i',
+                                }"
+                                class="form-control"
+                            />
+                        </Field>
+                        <div class="fv-plugins-message-container">
+                            <ErrorMessage name="closegate" class="fv-help-block" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prices -->
+            <div class="row mb-6">
+                <div class="col-md-6">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6 required">Harga VIP</label>
+                        <Field 
+                            type="number" 
+                            class="form-control form-control-lg"
+                            name="harga_vip"
+                            v-model="formData.harga_vip"
+                        />
+                        <div class="fv-plugins-message-container">
+                            <ErrorMessage name="harga_vip" class="fv-help-block" />
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6 required">Harga Regular</label>
+                        <Field 
+                            type="number" 
+                            class="form-control form-control-lg"
+                            name="harga_regular"
+                            v-model="formData.harga_regular"
+                        />
+                        <div class="fv-plugins-message-container">
+                            <ErrorMessage name="harga_regular" class="fv-help-block" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gate Capacities -->
+            <h4 class="mb-4">Gate Capacities</h4>
             <div class="row">
-                <h4 class="mb-4">Regular Gate Configuration</h4>
                 <div class="col-md-4">
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6">
-                            Gate A Capacity
-                        </label>
+                        <label class="form-label fw-bold fs-6">Gate A</label>
                         <Field 
-                            class="form-control form-control-lg form-control-solid" 
                             type="number" 
+                            class="form-control form-control-lg"
                             name="gate_a_capacity"
-                            v-model="user.gate_a_capacity" 
-                            placeholder="Gate A Capacity" 
+                            v-model="formData.gate_a_capacity"
                         />
                     </div>
                 </div>
+                
                 <div class="col-md-4">
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6">
-                            Gate B Capacity
-                        </label>
+                        <label class="form-label fw-bold fs-6">Gate B</label>
                         <Field 
-                            class="form-control form-control-lg form-control-solid" 
                             type="number" 
+                            class="form-control form-control-lg"
                             name="gate_b_capacity"
-                            v-model="user.gate_b_capacity" 
-                            placeholder="Gate B Capacity" 
+                            v-model="formData.gate_b_capacity"
                         />
                     </div>
                 </div>
+                
                 <div class="col-md-4">
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6">
-                            Gate C Capacity
-                        </label>
+                        <label class="form-label fw-bold fs-6">Gate C</label>
                         <Field 
-                            class="form-control form-control-lg form-control-solid" 
                             type="number" 
+                            class="form-control form-control-lg"
                             name="gate_c_capacity"
-                            v-model="user.gate_c_capacity" 
-                            placeholder="Gate C Capacity" 
+                            v-model="formData.gate_c_capacity"
                         />
                     </div>
                 </div>
+                
                 <div class="col-md-4">
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6">
-                            Gate D Capacity
-                        </label>
+                        <label class="form-label fw-bold fs-6">Gate D</label>
                         <Field 
-                            class="form-control form-control-lg form-control-solid" 
                             type="number" 
+                            class="form-control form-control-lg"
                             name="gate_d_capacity"
-                            v-model="user.gate_d_capacity" 
-                            placeholder="Gate D Capacity" 
+                            v-model="formData.gate_d_capacity"
                         />
                     </div>
                 </div>
+                
                 <div class="col-md-4">
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6">
-                            Gate E Capacity
-                        </label>
+                        <label class="form-label fw-bold fs-6">Gate E</label>
                         <Field 
-                            class="form-control form-control-lg form-control-solid" 
                             type="number" 
+                            class="form-control form-control-lg"
                             name="gate_e_capacity"
-                            v-model="user.gate_e_capacity" 
-                            placeholder="Gate E Capacity" 
+                            v-model="formData.gate_e_capacity"
                         />
                     </div>
                 </div>
             </div>
         </div>
-        <div class="card-footer d-flex">
-            <button type="submit" class="btn btn-primary btn-sm ms-auto">
-                Simpan
+
+        <div class="card-footer d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">
+                {{ selected ? 'Update' : 'Simpan' }}
             </button>
         </div>
     </VForm>
 </template>
+
+<style scoped>
+.fv-help-block {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.form-control-solid {
+    border-color: #f5f8fa;
+    color: #5e6278;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.form-control-solid:disabled {
+}
+</style>

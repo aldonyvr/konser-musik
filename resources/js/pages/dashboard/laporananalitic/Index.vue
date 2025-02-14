@@ -36,9 +36,9 @@ const filterData = (data) => {
 // Update paginate url based on user role
 const paginateUrl = computed(() => {
   if (userRole.value === '3') {
-    return `/konser/index?konser_id=${userKonserId.value}`;
+    return `/konser?konser_id=${userKonserId.value}`;
   }
-  return '/konser/index';
+  return '/konser';
 });
 
 // Function to view detailed report

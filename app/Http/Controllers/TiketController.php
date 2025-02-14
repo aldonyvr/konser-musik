@@ -68,14 +68,17 @@ class TiketController extends Controller
     public function edit($uuid)
     {
         try {
-            // Changed konsers to konser in the relationship name
-            $tiket = Tiket::with(['konser' => function($query) {
-                $query->select('id', 'title', 'deskripsi', 'lokasi', 'tanggal', 'image', 'tiket_tersedia');
-            }])
-            ->where('uuid', $uuid)
-            ->firstOrFail();
+            $tiket = Tiket::with('konser')
+                ->where('uuid', $uuid)
+                ->firstOrFail();
 
-            // Update response data structure
+            if (!$tiket) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tiket tidak ditemukan'
+                ], 404);
+            }
+
             $responseData = [
                 'id' => $tiket->id,
                 'uuid' => $tiket->uuid,
@@ -88,14 +91,12 @@ class TiketController extends Controller
                 'gate_a_capacity' => $tiket->gate_a_capacity,
                 'gate_b_capacity' => $tiket->gate_b_capacity,
                 'gate_c_capacity' => $tiket->gate_c_capacity,
-                'konser' => $tiket->konser ? [  // Changed from konsers to konser
+                'gate_d_capacity' => $tiket->gate_d_capacity,
+                'gate_e_capacity' => $tiket->gate_e_capacity,
+                'konser' => $tiket->konser ? [
                     'id' => $tiket->konser->id,
                     'title' => $tiket->konser->title,
-                    'deskripsi' => $tiket->konser->deskripsi,
-                    'lokasi' => $tiket->konser->lokasi,
-                    'tanggal' => $tiket->konser->tanggal,
-                    'tiket_tersedia' => $tiket->konser->tiket_tersedia,
-                    'image' => $tiket->konser->image,
+                    'tiket_tersedia' => $tiket->konser->tiket_tersedia
                 ] : null
             ];
 
@@ -104,12 +105,8 @@ class TiketController extends Controller
                 'data' => $responseData
             ]);
 
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tiket tidak ditemukan'
-            ], 404);
         } catch (\Exception $e) {
+            \Log::error('Error in TiketController@edit: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
@@ -118,17 +115,48 @@ class TiketController extends Controller
     }
     public function update(Request $request, $uuid)
     {
-        $tiket = Tiket::findByUuid($uuid);
-        if ($tiket) {
-            $tiket->update($request->all());
+        try {
+            DB::beginTransaction();
+            
+            $tiket = Tiket::where('uuid', $uuid)->first();
+            if (!$tiket) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tiket tidak ditemukan'
+                ], 404);
+            }
+
+            $validatedData = $request->validate([
+                'harga_vip' => 'required|numeric',
+                'harga_regular' => 'required|numeric',
+                'vip' => 'required|numeric',
+                'reguler' => 'required|numeric',
+                'opengate' => 'required',
+                'closegate' => 'required',
+                'gate_a_capacity' => 'nullable|numeric',
+                'gate_b_capacity' => 'nullable|numeric',
+                'gate_c_capacity' => 'nullable|numeric',
+                'gate_d_capacity' => 'nullable|numeric',
+                'gate_e_capacity' => 'nullable|numeric',
+            ]);
+
+            $tiket->update($validatedData);
+            
+            DB::commit();
+
             return response()->json([
-                'status' => 'true',
-                'message' => 'data berhasil diubah'
+                'success' => true,
+                'message' => 'Tiket berhasil diperbarui',
+                'data' => $tiket->fresh()
             ]);
-        } else {
-            return response([
-                'message' => 'gagal mengubah'
-            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error updating ticket: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui tiket: ' . $e->getMessage()
+            ], 500);
         }
     }
 

@@ -29,24 +29,4 @@ class Konser extends Model
     {
         return $this->hasOne(Tiket::class, 'konsers_id');
     }
-
-    public function mitra()
-    {
-        return $this->hasOne(User::class, 'konser_id');
-    }
-
-    public function tikets()
-    {
-        return $this->hasMany(Tiket::class, 'konsers_id');
-    }
-
-    public function pemesanan()
-    {
-        return $this->hasManyThrough(
-            DataPemesanan::class,
-            Tiket::class,
-            'konsers_id',
-            'tiket_id'
-        );
-    }
-}
+};

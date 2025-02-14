@@ -24,8 +24,10 @@ const image = ref<any>([]);
 const existingImage = ref('');
 
 function getEdit() {
+    if (!props.selected) return;
+
     block(document.getElementById("form-user"));
-    ApiService.get("/konser/edit", props.selected)
+    ApiService.get(`/konser/edit/${props.selected}`)
         .then(({ data }) => {
             user.value = data.data;
             // Handle existing image
@@ -52,7 +54,11 @@ const formSchema = yup.object().shape({
         .min(5, "Lokasi"),
     kontak: yup.string()
         .required("Kontak wajib diisi")
-        .matches(/^[0-9+()-]+$/, "Kontak hanya boleh berisi angka dan karakter +()-"),
+        .matches(/^[0-9]+$/, "Kontak hanya boleh berisi angka")
+        .matches(/^0/, "Kontak harus diawali dengan 0")
+        .min(10, "Kontak minimal 10 digit")
+        .max(13, "Kontak maksimal 13 digit"),
+
     tiket_tersedia: yup.number()
         .required("Total tiket wajib diisi")
         .typeError("Total tiket harus berupa angka")
@@ -65,21 +71,28 @@ const formSchema = yup.object().shape({
         .min(10, "Deskripsi minimal 10 karakter"),
 });
 
+// Add new method to handle number input
+const handleKontakInput = (event) => {
+    // Remove any non-numeric characters
+    const value = event.target.value.replace(/\D/g, '');
+    // Ensure it starts with 0
+    user.value.kontak = value.startsWith('0') ? value : '0' + value;
+};
 
 function submit() {
     const konserFormData = new FormData();
-    
-    // Add basic form fields
+
+    // Add form fields including tiket_tersedia
     konserFormData.append("title", user.value.title);
     konserFormData.append("jam", user.value.jam);
     konserFormData.append("tanggal", user.value.tanggal);
     konserFormData.append("lokasi", user.value.lokasi);
-    konserFormData.append("tiket_tersedia", user.value.tiket_tersedia);
+    konserFormData.append("tiket_tersedia", user.value.tiket_tersedia); // Ensure this is included
     konserFormData.append("deskripsi", user.value.deskripsi);
     konserFormData.append("nama_sosmed", user.value.nama_sosmed);
     konserFormData.append("kontak", user.value.kontak);
 
-    // Handle image upload - works for both new and edit
+    // Handle image upload
     if (image.value && image.value.length > 0) {
         if (image.value[0] instanceof File) {
             konserFormData.append("image", image.value[0]);
@@ -100,19 +113,19 @@ function submit() {
             "Content-Type": "multipart/form-data",
         },
     })
-    .then((konserResponse) => {
-        emit("close");
-        emit("refresh");
-        toast.success("Data konser dan tiket berhasil disimpan");
-        formRef.value.resetForm();
-    })
-    .catch((err: any) => {
-        formRef.value.setErrors(err.response?.data?.errors || {});
-        toast.error(err.response?.data?.message || "Terjadi kesalahan");
-    })
-    .finally(() => {
-        unblock(document.getElementById("form-user"));
-    });
+        .then((konserResponse) => {
+            emit("close");
+            emit("refresh");
+            toast.success("Data konser dan tiket berhasil disimpan");
+            formRef.value.resetForm();
+        })
+        .catch((err: any) => {
+            formRef.value.setErrors(err.response?.data?.errors || {});
+            toast.error(err.response?.data?.message || "Terjadi kesalahan");
+        })
+        .finally(() => {
+            unblock(document.getElementById("form-user"));
+        });
 }
 
 
@@ -160,7 +173,8 @@ watch(
                 <div class="col-md-3">
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">Tanggal</label>
-                        <Field name="tanggal" class="form-control form-control-lg form-control-solid" autocomplete="off">
+                        <Field name="tanggal" class="form-control form-control-lg form-control-solid"
+                            autocomplete="off">
                             <date-picker v-model="user.tanggal" placeholder="Masukan Tanggal Keberlakuan"></date-picker>
                         </Field>
                         <div class="fv-plugins-message-container">
@@ -205,8 +219,18 @@ watch(
                 <div class="col-md-3">
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">Kontak</label>
-                        <Field class="form-control form-control-lg form-control-solid" type="tel" name="kontak"
-                            autocomplete="off" v-model="user.kontak" placeholder="Nomor Kontak" />
+                        <Field 
+                            type="tel" 
+                            name="kontak"
+                            class="form-control form-control-lg form-control-solid"
+                            :value="user.kontak"
+                            @input="handleKontakInput"
+                            @keypress="(e) => {
+                                if (!/[0-9]/.test(e.key)) e.preventDefault();
+                            }"
+                            placeholder="Contoh: 08123456789"
+                            maxlength="13"
+                        />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="kontak" />
@@ -218,8 +242,9 @@ watch(
                 <div class="col-md-3">
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">Total Tiket</label>
-                        <Field class="form-control form-control-lg form-control-solid" type="number" name="tiket_tersedia"
-                            autocomplete="off" v-model="user.tiket_tersedia" placeholder="Total Tiket" min="1" />
+                        <Field class="form-control form-control-lg form-control-solid" type="number"
+                            name="tiket_tersedia" autocomplete="off" v-model="user.tiket_tersedia"
+                            placeholder="Total Tiket" min="1" />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="tiket_tersedia" />
@@ -259,22 +284,16 @@ watch(
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6">Banner Konser</label>
                         <div v-if="existingImage" class="mb-3">
-                            <img :src="existingImage" 
-                                 alt="Current Banner" 
-                                 class="img-thumbnail" 
-                                 style="max-height: 200px">
+                            <img :src="existingImage" alt="Current Banner" class="img-thumbnail"
+                                style="max-height: 200px">
                         </div>
-                        <file-upload 
-                            :files="image"
-                            :accepted-file-types="fileTypes"
-                            :required="!existingImage"
+                        <file-upload :files="image" :accepted-file-types="fileTypes" :required="!existingImage"
                             v-on:updatefiles="(files) => {
                                 image = files;
                                 if (files && files.length > 0) {
                                     existingImage = null;
                                 }
-                            }"
-                        ></file-upload>
+                            }"></file-upload>
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="foto" />
@@ -300,5 +319,16 @@ watch(
     background-color: #fff;
     max-width: 100%;
     height: auto;
+}
+
+/* Add style to prevent number input spinners */
+input[type="tel"]::-webkit-outer-spin-button,
+input[type="tel"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="tel"] {
+    -moz-appearance: textfield;
 }
 </style>

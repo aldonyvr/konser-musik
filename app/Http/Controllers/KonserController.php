@@ -89,58 +89,75 @@ class KonserController extends Controller
     }
 
     public function store(Request $request)
-{
-    // Validasi input
-    $req = $request->validate([
-        'title' => 'required|string|max:255',
-        'tanggal' => 'required|date',
-        'jam' => 'required',
-        'lokasi' => 'required|string|max:255',
-        'kontak' => 'nullable|string|max:255',
-        'deskripsi' => 'required|string',
-        'nama_sosmed' => 'required|string|max:255',
-        'image' => 'required|file|mimes:jpg,png,jpeg|max:2048',
-    ]);
+    {
+        try {
+            DB::beginTransaction();
 
-    // Jika ada file gambar
-    if ($request->hasFile('image')) {
-        $req['image'] = $request->file('image')->store('media', 'public');
+            // Validate input
+            $req = $request->validate([
+                'title' => 'required|string|max:255',
+                'tanggal' => 'required|date',
+                'jam' => 'required',
+                'lokasi' => 'required|string|max:255',
+                'kontak' => 'nullable|string|max:255',
+                'deskripsi' => 'required|string',
+                'nama_sosmed' => 'required|string|max:255',
+                'image' => 'required|file|mimes:jpg,png,jpeg|max:2048',
+                'tiket_tersedia' => 'required|numeric|min:1', // Add validation for tiket_tersedia
+            ]);
+
+            // Handle image upload
+            if ($request->hasFile('image')) {
+                $req['image'] = $request->file('image')->store('media', 'public');
+            }
+
+            // Create konser
+            $konser = Konser::create([
+                'title' => $req['title'],
+                'tanggal' => $req['tanggal'],
+                'jam' => $req['jam'],
+                'lokasi' => $req['lokasi'],
+                'kontak' => $req['kontak'] ?? null,
+                'deskripsi' => $req['deskripsi'],
+                'nama_sosmed' => $req['nama_sosmed'],
+                'image' => "/storage/".$req['image'],
+                'tiket_tersedia' => $req['tiket_tersedia']
+            ]);
+
+            // Create associated ticket record
+            $tiket = Tiket::create([
+                'konsers_id' => $konser->id,
+                'tiket_tersedia' => $req['tiket_tersedia'], // Set tiket_tersedia
+                'reguler' => 0,
+                'vip' => 0,
+                'harga_regular' => 0,
+                'harga_vip' => 0,
+                'gate_a_capacity' => 0,
+                'gate_b_capacity' => 0,
+                'gate_c_capacity' => 0,
+                'gate_d_capacity' => 0,
+                'gate_e_capacity' => 0,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data konser dan tiket berhasil disimpan',
+                'data' => [
+                    'konser' => $konser,
+                    'tiket' => $tiket,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error saving data: ' . $e->getMessage()
+            ], 500);
+        }
     }
-
-    // Gunakan transaksi untuk menyimpan data
-        // Simpan data ke tabel `konser`
-        $konser = Konser::create([
-            'title' => $req['title'],
-            'tanggal' => $req['tanggal'],
-            'jam' => $req['jam'],
-            'lokasi' => $req['lokasi'],
-            'kontak' => $req['kontak'] ?? null,
-            'deskripsi' => $req['deskripsi'],
-            'nama_sosmed' => $req['nama_sosmed'],
-            'image' => "/storage/".$req['image']
-        ]);
-
-        // Simpan data ke tabel `tiket`
-        $tiket = Tiket::create([
-            'konsers_id' => $konser->id, // Hubungkan dengan konser ID
-            'tiket_tersedia' => $req['tiket_tersedia'] ?? 0, // Default jika tidak ada
-        ]);
-
-        // $lokasi = Lokasi::create([
-        //     'konser_id' => $konser->id,
-        //     'lokasi' => $req['lokasi']
-        // ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Data konser dan tiket berhasil disimpan',
-            'data' => [
-                'konser' => $konser,
-                'tiket' => $tiket,
-            ]
-        ]);
-}
-
 
     public function edit($uuid)
     {
