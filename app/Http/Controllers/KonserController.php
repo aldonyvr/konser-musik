@@ -23,31 +23,18 @@ class KonserController extends Controller
 
     public function index(Request $request)
     {
-        $per = $request->per ?? 10;
-        $page = $request->page ? $request->page - 1 : 0;
-        $user = auth()->user();
-
-        DB::statement('set @no=0+' . $page * $per);
-
         $query = Tiket::with('konser');
 
-        // Filter for mitra
-        if ($user && $user->role_id === 3) {
-            $query->whereHas('konser', function($q) use ($user) {
-                $q->where('id', $user->konser_id);
-            });
-        }
-
-        // Add search functionality
-        if ($request->search) {
-            $query->whereHas('konser', function($q) use ($request) {
-                $q->where('title', 'like', "%{$request->search}%")
-                  ->orWhere('lokasi', 'like', "%{$request->search}%");
-            });
-        }
-
+        // Remove pagination limit or set it very high
+        $perPage = $request->per_page ?? 999999;
+        
+        DB::statement('set @no=0');
+        
         $data = $query->latest()
-                     ->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
+            ->paginate($perPage, ['*', DB::raw('@no := @no + 1 AS no')]);
+
+        // Add debug info
+        \Log::info('Fetched concerts:', ['count' => $data->count(), 'total' => $data->total()]);
 
         return response()->json($data);
     }

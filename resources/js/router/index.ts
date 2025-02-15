@@ -19,10 +19,9 @@ const routes: Array<RouteRecordRaw> = [
     {
         path: "/",
         name: "landing",
-        component: () => import("../landing/Index.vue"),
+        component: () => import("@/landing/Index.vue"),
         meta: {
             pageTitle: "Landing Page",
-            layout: "default",
         },
     },
     {

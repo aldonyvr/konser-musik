@@ -145,5 +145,60 @@ class TiketSeeder extends Seeder
        Tiket::create([
             'konsers_id' => 12,
        ]);
+       Tiket::create([
+            'konsers_id' => 13,
+            'tiket_tersedia' => '200',
+            'reguler' => '150',
+            'gate_a_capacity' => '50',
+            'gate_b_capacity' => '50',
+            'gate_c_capacity' => '50',
+            'vip' => '100',
+            'harga_vip' => '150000',
+            'harga_regular' => '100000',
+            'opengate' => '18:00',
+            'closegate' => '20:00',
+       ]);
+       Tiket::create([
+            'konsers_id' => 14,
+       ]);
+       Tiket::create([
+            'konsers_id' => 15,
+            'tiket_tersedia' => '200',
+            'reguler' => '150',
+            'gate_a_capacity' => '50',
+            'gate_b_capacity' => '50',
+            'gate_c_capacity' => '50',
+            'vip' => '100',
+            'harga_vip' => '150000',
+            'harga_regular' => '100000',
+            'opengate' => '18:00',
+            'closegate' => '20:00',
+       ]);
+       Tiket::create([
+            'konsers_id' => 16,
+            'tiket_tersedia' => '200',
+            'reguler' => '150',
+            'gate_a_capacity' => '50',
+            'gate_b_capacity' => '50',
+            'gate_c_capacity' => '50',
+            'vip' => '100',
+            'harga_vip' => '150000',
+            'harga_regular' => '100000',
+            'opengate' => '18:00',
+            'closegate' => '20:00',
+       ]);
+       Tiket::create([
+            'konsers_id' => 17,
+            'tiket_tersedia' => '200',
+            'reguler' => '150',
+            'gate_a_capacity' => '50',
+            'gate_b_capacity' => '50',
+            'gate_c_capacity' => '50',
+            'vip' => '100',
+            'harga_vip' => '150000',
+            'harga_regular' => '100000',
+            'opengate' => '18:00',
+            'closegate' => '20:00',
+       ]);
     }
 }

@@ -133,10 +133,10 @@ Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan sua
         ]);
         Konser::create([
             'title' => 'HIVI!',
-            'tanggal' => '2024-12-14',
+            'tanggal' => '2025-12-14',
             'lokasi' => 'JAKARTA',
             'jam' => '20.00',
-            'image' => '/media/musik/cas.png',
+            'image' => '/media/musik/hivi.jpg',
             // 'kontak' => '086723467236',
             'deskripsi' => 'Nikmati malam penuh atmosfer melankolis dan romantis bersama Cigarettes After Sex, band dream pop asal Amerika yang telah memikat hati banyak penggemar di seluruh dunia. Konser ini akan berlangsung di Jakarta pada 14  50.000.
 
@@ -146,10 +146,10 @@ Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan sua
         ]);
         Konser::create([
             'title' => 'Dewa 19',
-            'tanggal' => '2024-12-14',
+            'tanggal' => '2025-12-14',
             'lokasi' => 'JAKARTA',
             'jam' => '20.00',
-            'image' => '/media/musik/cas.png',
+            'image' => '/media/musik/dewa19.jpg',
             // 'kontak' => '086723467236',
             'deskripsi' => 'Nikmati malam penuh atmosfer melankolis dan romantis bersama Cigarettes After Sex, band dream pop asal Amerika yang telah memikat hati banyak penggemar di seluruh dunia. Konser ini akan berlangsung di Jakarta pada 14  50.000.
 
@@ -162,7 +162,7 @@ Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan sua
             'tanggal' => '2025-12-14',
             'lokasi' => 'JAKARTA',
             'jam' => '20.00',
-            'image' => '/media/musik/cas.png',
+            'image' => '/media/musik/thebeatles.jpg',
             // 'kontak' => '086723467236',
             'deskripsi' => 'Nikmati malam penuh atmosfer melankolis dan romantis bersama Cigarettes After Sex, band dream pop asal Amerika yang telah memikat hati banyak penggemar di seluruh dunia. Konser ini akan berlangsung di Jakarta pada 14  50.000.
 
@@ -175,7 +175,7 @@ Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan sua
             'tanggal' => '2025-12-14',
             'lokasi' => 'JAKARTA',
             'jam' => '20.00',
-            'image' => '/media/musik/cas.png',
+            'image' => '/media/musik/nirvana.png',
             // 'kontak' => '086723467236',
             'deskripsi' => 'Nikmati malam penuh atmosfer melankolis dan romantis bersama Cigarettes After Sex, band dream pop asal Amerika yang telah memikat hati banyak penggemar di seluruh dunia. Konser ini akan berlangsung di Jakarta pada 14  50.000.
 
@@ -184,5 +184,69 @@ Band ini dikenal dengan suara lembut dan lirik-lirik yang penuh emosi, menjadika
 Acara dimulai pukul 20:00 WIB, dan lokasi konser dirancang untuk menciptakan suasana nyaman bagi semua penonton. Dengan kapasitas terbatas 150 tiket, pastikan Anda tidak melewatkan kesempatan untuk menikmati malam magis bersama Cigarettes After Sex.',
         ]);
 
+        Konser::create([
+            'title' => 'Coldplay Music Of The Spheres',
+            'tanggal' => '2025-04-15',
+            'lokasi' => 'JAKARTA',
+            'jam' => '19.00',
+            'image' => '/media/musik/coldplay.jpg',
+            'deskripsi' => 'Bersiaplah untuk pengalaman konser paling spektakuler tahun ini bersama Coldplay dalam tur dunia "Music Of The Spheres" yang akan singgah di Jakarta pada 15 April 2025! Konser fenomenal ini akan menghadirkan pertunjukan yang memukau dengan teknologi gelang LED dan visual menakjubkan.
+
+Band legendaris asal Inggris ini akan membawakan hits-hits terbaik mereka seperti "Fix You", "Yellow", "The Scientist", hingga lagu-lagu terbaru dari album "Music Of The Spheres". Dengan stage production kelas dunia, light show yang memukau, dan special effects yang inovatif, konser ini menjanjikan pengalaman yang tak terlupakan.
+
+Bertempat di Stadion Utama Gelora Bung Karno, konser dimulai pukul 19:00 WIB dengan kapasitas venue yang terbatas untuk memberikan pengalaman terbaik bagi setiap penonton. Jangan lewatkan kesempatan langka ini untuk menjadi bagian dari sejarah musik dunia!',
+        ]);
+
+        Konser::create([
+            'title' => 'BLACKPINK World Tour',
+            'tanggal' => '2025-05-20',
+            'lokasi' => 'SURABAYA',
+            'jam' => '19.30',
+            'image' => '/media/musik/blackpink.jpg',
+            'deskripsi' => 'BLACKPINK, girl group fenomenal asal Korea Selatan, akan menggelar konser spektakuler di Surabaya pada 20 Mei 2025! Grup yang terdiri dari Jisoo, Jennie, Rosé, dan Lisa ini siap memukau BLINK Indonesia dengan penampilan energetik dan koreografi memukau mereka.
+
+Konser akan menampilkan hits-hits terbesar BLACKPINK seperti "DDU-DU DDU-DU", "Kill This Love", "How You Like That", serta lagu-lagu terbaru mereka. Stage production akan dilengkapi dengan LED screen raksasa, special effects, dan tata cahaya yang spektakuler.
+
+Berlokasi di Stadion Gelora Bung Tomo Surabaya, konser dimulai pukul 19:30 WIB. Area konser dibagi menjadi beberapa section dengan berbagai pilihan harga tiket untuk mengakomodasi semua penggemar. Pastikan Anda mendapatkan tiket sebelum kehabisan!',
+        ]);
+
+        Konser::create([
+            'title' => 'Taylor Swift: The Eras Tour',
+            'tanggal' => '2025-06-10',
+            'lokasi' => 'JAKARTA',
+            'jam' => '19.00',
+            'image' => '/media/musik/taylor.jpg',
+            'deskripsi' => 'Taylor Swift membawa tur fenomenalnya "The Eras Tour" ke Jakarta pada 10 Juni 2025! Konser spektakuler ini akan menampilkan perjalanan musikal melalui semua era Taylor Swift, dari country hingga pop.
+
+Dalam konser berdurasi lebih dari 3 jam, Taylor akan membawakan lagu-lagu ikonik dari setiap albumnya, termasuk "Fearless", "Red", "1989", "Folklore", "Evermore", dan "Midnights". Pengalaman konser akan diperkaya dengan kostum yang menakjubkan, tata panggung yang megah, dan produksi visual yang memukau.
+
+Bertempat di Stadion Utama Gelora Bung Karno, konser dimulai pukul 19:00 WIB. Dengan set list lebih dari 40 lagu, konser ini akan menjadi perayaan musik yang tak terlupakan bagi para Swifties di Indonesia.',
+        ]);
+
+        Konser::create([
+            'title' => 'Ed Sheeran Mathematics Tour',
+            'tanggal' => '2025-07-05',
+            'lokasi' => 'BANDUNG',
+            'jam' => '20.00',
+            'image' => '/media/musik/edsheeran.jpg',
+            'deskripsi' => 'Ed Sheeran membawa tur Mathematics-nya ke Bandung pada 5 Juli 2025! Penyanyi dan penulis lagu berbakat asal Inggris ini akan menghibur penggemar Indonesia dengan pertunjukan solo yang mengesankan menggunakan loop pedal khasnya.
+
+Konser akan menampilkan hits terbaik Ed seperti "Perfect", "Shape of You", "Thinking Out Loud", dan lagu-lagu terbaru dari album terbarunya. Dengan panggung berbentuk lingkaran yang unik dan sistem suara yang superior, penonton akan mendapatkan pengalaman konser yang intim dan berkesan.
+
+Bertempat di Stadion Gelora Bandung Lautan Api, konser dimulai pukul 20:00 WIB. Perpaduan antara musik akustik dan teknologi modern akan menciptakan atmosfer yang magis sepanjang malam.',
+        ]);
+
+        Konser::create([
+            'title' => 'Arctic Monkeys Live in Jakarta',
+            'tanggal' => '2025-08-15',
+            'lokasi' => 'JAKARTA',
+            'jam' => '20.00',
+            'image' => '/media/musik/dmonkey.jpg',
+            'deskripsi' => 'Arctic Monkeys, band rock alternatif legendaris asal Sheffield, Inggris, akan menggelar konser perdana mereka di Jakarta pada 15 Agustus 2025! Band yang dipimpin oleh Alex Turner ini akan membawakan repertoir lengkap dari berbagai era musik mereka.
+
+Penonton akan disuguhi hits klasik seperti "I Bet You Look Good on the Dancefloor", "Do I Wanna Know?", hingga lagu-lagu dari album terbaru mereka. Dengan kombinasi musik rock yang energetik dan permainan cahaya yang dinamis, konser ini menjanjikan pengalaman rock n roll sejati.
+
+Berlokasi di ICE BSD City, konser dimulai pukul 20:00 WIB. Venue indoor ini dipilih khusus untuk mengoptimalkan kualitas suara dan memberikan pengalaman konser yang intim bagi para penggemar. Tiket terbatas untuk 5000 penonton, pastikan Anda mendapatkan tiket secepatnya!',
+        ]);
     }
 }
