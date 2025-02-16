@@ -18,48 +18,47 @@ class KonserReportExport implements FromArray, WithHeadings, WithStyles
 
     public function array(): array
     {
-        $data = [];
+        $rows = [];
         
-        // Konser Info
-        $data[] = ['Informasi Konser'];
-        $data[] = ['Judul', $this->report['konser_info']['title']];
-        $data[] = ['Tanggal', $this->report['konser_info']['tanggal']];
-        $data[] = ['Lokasi', $this->report['konser_info']['lokasi']];
-        $data[] = [];
+        // Add konser info
+        $rows[] = ['Informasi Konser'];
+        $rows[] = ['Judul', $this->report['konser_info']['title']];
+        $rows[] = ['Tanggal', $this->report['konser_info']['tanggal']];
+        $rows[] = ['Lokasi', $this->report['konser_info']['lokasi']];
+        $rows[] = [];
 
-        // Ticket Stats
-        $data[] = ['Statistik Tiket'];
-        $data[] = ['Total Tiket Terjual', $this->report['ticket_stats']['total_tickets']];
-        $data[] = ['Total Pendapatan', 'Rp ' . number_format($this->report['ticket_stats']['total_revenue'], 0, ',', '.')];
-        $data[] = [];
+        // Add ticket stats
+        $rows[] = ['Statistik Tiket'];
+        $rows[] = ['Total Tiket Terjual', $this->report['ticket_stats']['total_tickets']];
+        $rows[] = ['Total Pendapatan', 'Rp ' . number_format($this->report['ticket_stats']['total_revenue'])];
+        $rows[] = [];
 
-        // By Type
-        $data[] = ['Penjualan per Kategori'];
-        $data[] = ['Kategori', 'Jumlah', 'Pendapatan'];
+        // Add ticket types detail
+        $rows[] = ['Detail Per Tipe Tiket'];
+        $rows[] = ['Tipe Tiket', 'Jumlah Terjual', 'Pendapatan'];
         foreach ($this->report['ticket_stats']['by_type'] as $type => $count) {
-            $data[] = [
+            $rows[] = [
                 $type,
                 $count,
-                'Rp ' . number_format($this->report['ticket_stats']['revenue_by_type'][$type], 0, ',', '.')
+                'Rp ' . number_format($this->report['ticket_stats']['revenue_by_type'][$type])
             ];
         }
 
-        return $data;
+        return $rows;
     }
 
     public function headings(): array
     {
-        return [
-            ['Laporan Konser'],
-        ];
+        return []; // Headings are included in array()
     }
 
     public function styles(Worksheet $sheet)
     {
         return [
             1 => ['font' => ['bold' => true, 'size' => 14]],
-            6 => ['font' => ['bold' => true]],
+            6 => ['font' => ['bold' => true, 'size' => 14]],
             10 => ['font' => ['bold' => true]],
+            11 => ['font' => ['bold' => true]]
         ];
     }
 }

@@ -51,68 +51,51 @@ const extractUniqueCities = () => {
   cities.value = Array.from(uniqueCities).sort();
 };
 
-watch(selectedCity, (newCity) => {
-  if (!newCity) {
+const filterKonserByCity = () => {
+  if (!selectedCity.value) {
+    // If no city selected, show all concerts
     filteredKonser.value = konser.value;
   } else {
-    filteredKonser.value = konser.value.filter(concert =>
-      concert.lokasi.toLowerCase() === newCity.toLowerCase()
-    );
+    // Filter by selected city
+    filteredKonser.value = konser.value.filter((concert) => {
+      const concertCity = concert.konser?.lokasi?.toLowerCase() || '';
+      const selectedCityValue = selectedCity.value?.toLowerCase() || '';
+      return concertCity === selectedCityValue;
+    });
   }
 
+  // Apply search query filter if exists
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
-    filteredKonser.value = filteredKonser.value.filter(concert =>
-      concert.title.toLowerCase().includes(query)
-    );
+    filteredKonser.value = filteredKonser.value.filter((concert) => {
+      const title = concert.konser?.title?.toLowerCase() || '';
+      return title.includes(query);
+    });
   }
-});
+};
 
-watch([searchQuery], () => {
-  debouncedSearch();
-});
-
-watch([selectedCity], () => {
+watch(selectedCity, (newCity) => {
   filterKonserByCity();
-});
+}, { immediate: true });
+
+watch(searchQuery, (newQuery) => {
+  filterKonserByCity();
+}, { immediate: true });
 
 const fetchCities = async () => {
   try {
     const response = await axios.get("/konser/cities");
     if (response.data.data) {
-      cities.value = response.data.data;
-    } else if (Array.isArray(response.data)) {
-      cities.value = response.data;
-    } else {
-      console.error('Unexpected response structure:', response.data);
-      cities.value = [];
+      cities.value = response.data.data.map(city => ({
+        id: city.lokasi,
+        text: city.lokasi
+      }));
     }
   } catch (error) {
     console.error("Error fetching cities:", error);
     cities.value = [];
   }
 };
-
-
-const filterKonserByCity = () => {
-  if (!selectedCity.value) {
-    filteredKonser.value = konser.value;
-    return;
-  }
-
-  filteredKonser.value = konser.value.filter((concert) => {
-    return concert.lokasi.toLowerCase() === selectedCity.value?.toLowerCase();
-  });
-
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    filteredKonser.value = filteredKonser.value.filter((concert) =>
-      concert.title.toLowerCase().includes(query) ||
-      concert.lokasi.toLowerCase().includes(query)
-    );
-  }
-};
-
 
 const goToEventDetail = (id: number) => {
   router.push(`/detail-konser/${id}`);
@@ -221,22 +204,42 @@ onMounted(() => {
 const searchKonser = async () => {
   isLoading.value = true;
   try {
-    const params = {
-      search: searchQuery.value,
-      kota: selectedCity.value || ''
-    };
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (searchQuery.value) {
+      params.append('search', searchQuery.value);
+    }
+    if (selectedCity.value) {
+      params.append('kota', selectedCity.value);
+    }
 
-    const response = await axios.get("/konser", { params });
+    const response = await axios.get("/konser", { 
+      params: {
+        search: searchQuery.value,
+        kota: selectedCity.value,
+        per_page: 999999
+      }
+    });
 
     if (response.data.data) {
-      filteredKonser.value = response.data.data;
-      konser.value = response.data.data;
-    } else {
-      filteredKonser.value = [];
+      // Filter locally based on search query and selected city
+      const data = response.data.data;
+      filteredKonser.value = data.filter(concert => {
+        const matchesSearch = !searchQuery.value || 
+          concert.konser.title.toLowerCase().includes(searchQuery.value.toLowerCase());
+        
+        const matchesCity = !selectedCity.value || 
+          concert.konser.lokasi.toLowerCase() === selectedCity.value.toLowerCase();
+        
+        return matchesSearch && matchesCity;
+      });
+
+      // Update available and upcoming concerts
+      konser.value = filteredKonser.value;
     }
   } catch (error) {
     console.error("Error searching concerts:", error);
-    filteredKonser.value = [];
+    toast.error("Gagal mencari konser");
   } finally {
     isLoading.value = false;
   }
@@ -250,7 +253,9 @@ const debounce = (fn: Function, delay: number) => {
   };
 };
 
-const debouncedSearch = debounce(searchKonser, 300);
+const debouncedSearch = debounce(() => {
+  searchKonser();
+}, 300);
 
 // Add pagination data
 const currentPage = ref(1);
@@ -308,6 +313,18 @@ watch([upcomingConcerts, availableConcerts], ([upcoming, available]) => {
   console.log('Upcoming concerts:', upcoming.length);
   console.log('Available concerts:', available.length);
 });
+
+// Update watchers
+watch([searchQuery, selectedCity], () => {
+  debouncedSearch();
+}, { immediate: false });
+
+// Add method to reset filters
+const resetFilters = () => {
+  searchQuery.value = '';
+  selectedCity.value = '';
+  searchKonser();
+};
 </script>
 
 <template>
@@ -373,22 +390,67 @@ watch([upcomingConcerts, availableConcerts], ([upcoming, available]) => {
           <span class="input-group-text bg-secondary border-0" style="background-color: #ced4da !important;">
             <i class="fa fa-music"></i>
           </span>
-          <input v-model="searchQuery" type="text" class="form-control bg-secondary border-0 text-black"
-            style="background-color: #ced4da !important;" placeholder="Cari Konser . . ." aria-label="Search"
-            aria-describedby="button-addon2">
-          <button class="btn btn-secondary" type="submit" id="button-addon2" :disabled="isLoading">
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            class="form-control bg-secondary border-0 text-black"
+            style="background-color: #ced4da !important;" 
+            placeholder="Cari nama konser..." 
+            aria-label="Search"
+          >
+          <button class="btn btn-secondary" type="submit" :disabled="isLoading">
             <i class="fa fa-search"></i>
           </button>
         </div>
       </form>
-      <div class="mt-7">
-        <select v-model="selectedCity" class="form-select" placeholder="Pilih Kota">
+
+      <!-- Update city filter -->
+      <div class="mt-7 d-flex gap-2">
+        <select 
+          v-model="selectedCity" 
+          class="form-select" 
+          style="min-width: 200px;"
+        >
           <option value="">Semua Kota</option>
-          <option v-for="city in cities" :key="city" :value="city">
-            {{ city.lokasi }}
+          <option 
+            v-for="city in cities" 
+            :key="city.id"
+            :value="city.text"
+          >
+            {{ city.text }}
           </option>
         </select>
+
+        <!-- Add reset button -->
+        <button 
+          v-if="searchQuery || selectedCity"
+          @click="resetFilters" 
+          class="btn btn-outline-secondary"
+          title="Reset filter"
+        >
+          <i class="fas fa-undo-alt"></i>
+        </button>
       </div>
+    </div>
+
+    <!-- Add loading indicator -->
+    <div v-if="isLoading" class="text-center my-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Add no results message -->
+    <div v-else-if="filteredKonser.length === 0" class="text-center my-5">
+      <p class="lead text-muted">
+        Tidak ada konser yang ditemukan
+        <span v-if="searchQuery || selectedCity">
+          dengan filter yang dipilih
+        </span>
+      </p>
+      <button @click="resetFilters" class="btn btn-outline-primary mt-2">
+        Reset Filter
+      </button>
     </div>
 
     <div class="container">
@@ -976,8 +1038,8 @@ h3, .h3 {
 }
 
 .btn {
-  font-weight: 500;
   letter-spacing: 0.02em;
+  height: 40px;
 }
 
 /* Update other specific text styles */
@@ -996,5 +1058,29 @@ h3, .h3 {
 .badge {
   font-weight: 600;
   letter-spacing: 0.03em;
+}
+
+/* Add styles for filter components */
+.form-select {
+  border-radius: 0.5rem;
+  height: 40px;
+  border: 1px solid #ced4da;
+  transition: all 0.3s ease;
+}
+
+.form-select:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.btn-outline-secondary {
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  color: white;
 }
 </style>

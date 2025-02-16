@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('mitra_konser', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('konser_id')->constrained('konsers')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

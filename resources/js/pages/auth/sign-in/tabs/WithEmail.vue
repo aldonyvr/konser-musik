@@ -89,7 +89,7 @@ export default defineComponent({
                     this.router.push("/");
                     break;
                 case 3:
-                    this.router.push("/dashboard");
+                    this.router.push("/dashboard/");
                     break;
                 default:
                     this.router.push("/dashboard");

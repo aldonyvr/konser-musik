@@ -22,17 +22,22 @@ class ScannerController extends Controller
             if (!$ticket) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'QR Code tidak valid'
+                    'message' => 'QR Code tidak valid',
+                    'type' => 'invalid'
                 ], 404);
             }
 
-            // Check if ticket has already been scanned
+            // Check if ticket has been scanned
             if ($ticket->is_scanned) {
-                $scanTime = $ticket->scanned_at->format('d M Y H:i:s');
                 return response()->json([
                     'success' => false,
-                    'message' => "QR Code sudah digunakan!\nWaktu scan: {$scanTime}",
-                    'type' => 'already_used'
+                    'message' => 'Tiket sudah digunakan!',
+                    'type' => 'already_scanned',
+                    'scan_info' => [
+                        'scanned_at' => $ticket->scanned_at->format('d M Y H:i:s'),
+                        'ticket_holder' => $ticket->nama_pemesan,
+                        'event_name' => $ticket->tiket->konser->title
+                    ]
                 ], 400);
             }
 
@@ -68,7 +73,8 @@ class ScannerController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error scanning ticket: ' . $e->getMessage()
+                'message' => 'Error scanning ticket: ' . $e->getMessage(),
+                'type' => 'error'
             ], 500);
         }
     }

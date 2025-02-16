@@ -16,6 +16,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\registerController;
 use App\Http\Controllers\DataPemesananController;
 use App\Http\Controllers\TicketScannerController;
+use App\Http\Controllers\ReportController;
 
 
 /*
@@ -81,6 +82,7 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
             Route::post('get', [KonserController::class, 'get'])->withoutMiddleware(['auth', 'verified']);
             Route::post('', [KonserController::class, 'index'])->withoutMiddleware(['auth', 'verified']);
             Route::get('', [KonserController::class, 'index'])->withoutMiddleware(['auth', 'verified']);
+            Route::put('report/{uuid}', [KonserController::class, 'report'])->withoutMiddleware(['auth', 'verified']);
             Route::post('show', [KonserController::class, 'show']);
             Route::get('edit/{uuid}', [KonserController::class, 'edit'])->withoutMiddleware(['auth', 'verified']);
             Route::post('update/{uuid}', [KonserController::class, 'update']);
@@ -88,6 +90,10 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
             Route::get('cities', [KonserController::class, 'getCities'])->withoutMiddleware(['auth', 'verified']);;
             Route::apiResource('konser', KonserController::class)
                 ->except(['index', 'store']);
+            
+            // Add these new routes
+            Route::get('report/{uuid}', [ReportController::class, 'getReport']);
+            Route::get('download-report/{uuid}', [ReportController::class, 'downloadReport']);
         });
         Route::prefix('tiket')->group(function () {
             Route::get('get', [TiketController::class, 'get'])->withoutMiddleware(['auth', 'verified']);

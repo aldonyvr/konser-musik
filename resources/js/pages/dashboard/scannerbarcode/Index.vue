@@ -4,7 +4,12 @@ import { Html5Qrcode } from 'html5-qrcode'; // Change import to Html5Qrcode only
 import axios from '@/libs/axios';
 
 const scanner = ref(null);
-const ticketInfo = ref(null);
+const scanResult = ref({
+    status: '',
+    message: '',
+    type: '',
+    scanInfo: null
+});
 const scanStatus = ref('');
 const isScanning = ref(true);
 
@@ -50,17 +55,29 @@ const handleScanSuccess = async (decodedText) => {
         });
 
         if (response.data.success) {
-            scanStatus.value = 'success';
-            ticketInfo.value = response.data.data;
+            scanResult.value = {
+                status: 'success',
+                message: 'Tiket Valid',
+                type: 'valid',
+                scanInfo: response.data.data
+            };
             playSound('success');
         }
     } catch (error) {
-        scanStatus.value = 'error';
-        ticketInfo.value = {
-            error: error.response?.data?.message || 'QR Code tidak valid',
-            type: error.response?.data?.type || 'invalid'
+        const errorData = error.response?.data;
+        scanResult.value = {
+            status: 'error',
+            message: errorData?.message || 'QR Code tidak valid',
+            type: errorData?.type || 'invalid',
+            scanInfo: errorData?.scan_info || null
         };
-        playSound('error');
+        
+        // Play different sounds based on error type
+        if (errorData?.type === 'already_scanned') {
+            playSound('warning');
+        } else {
+            playSound('error');
+        }
     }
 
     // Reset after 3 seconds
@@ -91,28 +108,49 @@ const playSound = (type) => {
                     <div id="qr-reader" class="qr-container"></div>
                 </div>
                 <div class="col-md-6">
-                    <!-- Scan Result -->
-                    <div v-if="ticketInfo" 
-                         :class="['alert', 
-                                 scanStatus === 'success' ? 'alert-success' : 
-                                 ticketInfo.type === 'already_used' ? 'alert-warning' : 'alert-danger', 
-                                 'fade-in']">
-                        <div v-if="scanStatus === 'success'">
-                            <h4 class="mb-3">✅ Tiket Valid</h4>
+                    <!-- Updated Scan Result Display -->
+                    <div v-if="scanResult.message" 
+                         :class="['alert', {
+                             'alert-success': scanResult.type === 'valid',
+                             'alert-warning': scanResult.type === 'already_scanned',
+                             'alert-danger': scanResult.type === 'invalid' || scanResult.type === 'error'
+                         }, 'fade-in']">
+                        
+                        <!-- Valid Ticket -->
+                        <div v-if="scanResult.type === 'valid'">
+                            <h4 class="alert-heading">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Tiket Valid
+                            </h4>
+                            <hr>
                             <div class="ticket-info">
-                                <p><strong>Nama:</strong> {{ ticketInfo.ticket_holder }}</p>
-                                <p><strong>Event:</strong> {{ ticketInfo.event_name }}</p>
-                                <p><strong>Tipe:</strong> {{ ticketInfo.ticket_type }}</p>
-                                <p><strong>Gate:</strong> {{ ticketInfo.gate }}</p>
-                                <p><strong>Tanggal:</strong> {{ ticketInfo.event_date }}</p>
+                                <p><strong>Nama:</strong> {{ scanResult.scanInfo.ticket_holder }}</p>
+                                <p><strong>Event:</strong> {{ scanResult.scanInfo.event_name }}</p>
+                                <p><strong>Gate:</strong> {{ scanResult.scanInfo.gate }}</p>
+                                <p><strong>Tanggal:</strong> {{ scanResult.scanInfo.event_date }}</p>
                             </div>
                         </div>
-                        <div v-else>
-                            <h4 class="mb-3" :class="{'text-warning': ticketInfo.type === 'already_used'}">
-                                {{ ticketInfo.type === 'already_used' ? '⚠️' : '❌' }} 
-                                {{ ticketInfo.type === 'already_used' ? 'Tiket Sudah Digunakan' : 'Tiket Tidak Valid' }}
+
+                        <!-- Already Scanned Ticket -->
+                        <div v-else-if="scanResult.type === 'already_scanned'">
+                            <h4 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                Tiket Sudah Digunakan!
                             </h4>
-                            <p>{{ ticketInfo.error }}</p>
+                            <hr>
+                            <div class="ticket-info">
+                                <p><strong>Waktu Scan:</strong> {{ scanResult.scanInfo.scanned_at }}</p>
+                                <p><strong>Nama:</strong> {{ scanResult.scanInfo.ticket_holder }}</p>
+                                <p><strong>Event:</strong> {{ scanResult.scanInfo.event_name }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Invalid Ticket -->
+                        <div v-else>
+                            <h4 class="alert-heading">
+                                <i class="fas fa-times-circle text-danger me-2"></i>
+                                {{ scanResult.message }}
+                            </h4>
                         </div>
                     </div>
                 </div>
@@ -146,9 +184,12 @@ const playSound = (type) => {
 }
 
 .alert {
+    position: relative;
     padding: 1.5rem;
     margin-bottom: 1rem;
+    border: none;
     border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .alert-success {
@@ -162,6 +203,33 @@ const playSound = (type) => {
 .alert-warning {
     background-color: #fff3cd;
     border-left: 5px solid #ffc107;
+    color: #856404;
+}
+
+.alert-heading {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.ticket-info {
+    padding: 1rem;
+    border-radius: 6px;
+}
+
+.fade-in {
+    animation: fadeInAlert 0.3s ease-in;
+}
+
+@keyframes fadeInAlert {
+    from { 
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Remove file input related styles */
