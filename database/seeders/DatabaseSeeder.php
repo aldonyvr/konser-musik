@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             KonserSeeder::class,
             BannerSeeder::class,
             TiketSeeder::class,
+            DataPemesananSeeder::class,
         ]);
     }
 }

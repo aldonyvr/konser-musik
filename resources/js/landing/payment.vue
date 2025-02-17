@@ -43,12 +43,21 @@ const fetchTickets = async (orderId: string) => {
 // Handle payment status updates
 const handlePaymentUpdate = async (result: any, status: string) => {
   try {
-    await axios.post('datapemesan/payment-callback', {
+    const response = await axios.post('datapemesan/payment-callback', {
       order_id: route.query.order_id,
       transaction_status: status === 'success' ? 'settlement' : 
                          status === 'pending' ? 'pending' : 'expire',
       fraud_status: status === 'success' ? 'accept' : 'deny'
     });
+
+    // Check response status and update UI accordingly
+    if (response.data.status === 'Failed') {
+      showPaymentError(
+        'Pembayaran Gagal',
+        'Mohon maaf, pembayaran Anda gagal diproses. Silakan coba lagi.'
+      );
+      return;
+    }
 
     paymentStatus.value = status;
 
@@ -142,7 +151,10 @@ onMounted(() => {
     },
     onError: async (result) => {
       clearTimeout(paymentTimeout);
-      await handlePaymentUpdate(result, 'error');
+      showPaymentError(
+        'Pembayaran Gagal',
+        ERROR_MESSAGES.FAILED
+      );
     },
     onClose: async () => {
       clearTimeout(paymentTimeout);
@@ -167,9 +179,9 @@ onMounted(() => {
 
     <main class="container mx-auto px-4 py-12 mt-20">
       <div class="max-w-2xl mx-auto">
-        <!-- Payment Failed State -->
+        <!-- Show payment failed when status is Failed or showPaymentFailed is true -->
         <div 
-          v-if="showPaymentFailed"
+          v-if="showPaymentFailed || paymentStatus === 'failed'"
           class="payment-failed  rounded-xl shadow-lg p-8 text-center transform transition-all duration-300"
         >
           <div class="error-icon mb-6 animate-bounce">
@@ -213,7 +225,7 @@ onMounted(() => {
         <!-- Loading State -->
         <div 
           v-else-if="isLoading || paymentStatus === 'processing'"
-          class="loading-state bg-white rounded-xl shadow-lg p-8 text-center"
+          class="loading-state rounded-xl shadow-lg p-8 text-center"
         >
           <div class="loading-spinner mb-6">
             <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-50 mx-auto"></div>

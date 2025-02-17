@@ -147,8 +147,8 @@ const routes: Array<RouteRecordRaw> = [
                 name: "dashboard.laporananalitic",
                 component: () => import("@/pages/dashboard/laporananalitic/Index.vue"),
                 meta: {
-                    pageTitle: "Laporan & Analitic",
-                    breadcrumbs: ["Laporan & Analitic"],
+                    pageTitle: "Laporan Penjualan",
+                    breadcrumbs: ["Laporan Penjualan"],
                 },
             },
             {

@@ -26,7 +26,8 @@ class DataPemesanan extends Model
         'status_pembayaran',
         'total_harga',
         'gate',
-        'is_used'
+        'is_used',
+        'gate_type'  // Make sure this is included
     ];
 
     protected $casts = [
@@ -53,5 +54,17 @@ class DataPemesanan extends Model
             'tiket_id',
             'konsers_id'
         );
+    }
+
+    // Add an accessor to normalize gate_type
+    public function getGateTypeAttribute($value)
+    {
+        return strtolower($value);
+    }
+
+    // Add a mutator to ensure consistent storage
+    public function setGateTypeAttribute($value)
+    {
+        $this->attributes['gate_type'] = strtolower($value);
     }
 }

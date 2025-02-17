@@ -54,8 +54,9 @@ for (let i = new Date().getFullYear(); i >= new Date().getFullYear() - 2; i--) {
             <!--begin::Menu wrapper-->
             <div class="cursor-pointer symbol symbol-35px" data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
                 data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
-                <img :src="getAssetPath(user.photo ?? 'media/avatars/300-3.jpg')" class="rounded-3" alt="user" />
+                <img src="/media/musik/userprofile.jpeg" class="rounded-3" alt="" />
             </div>
+
             <KTUserMenu />
             <!--end::Menu wrapper-->
         </div>

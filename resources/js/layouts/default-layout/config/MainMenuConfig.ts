@@ -44,7 +44,7 @@ const MainMenuConfig: Array<MenuItem> = [
                 keenthemesIcon: "directbox-default",
             },
             {
-                heading: "Laporan & Analitic",
+                heading: "Laporan Penjualan",
                 route: "/dashboard/laporananalitic",
                 name: "laporananalitic",
                 keenthemesIcon: "chart-simple",
@@ -93,11 +93,11 @@ const MainMenuConfig: Array<MenuItem> = [
                                 name: "master-role",
                                 route: "/dashboard/master/users/roles",
                             },
-                            {
-                                heading: "User",
-                                name: "master-user",
-                                route: "/dashboard/master/users",
-                            },
+                            // {
+                            //     heading: "User",
+                            //     name: "master-user",
+                            //     route: "/dashboard/master/users",
+                            // },
                         ],
                     },
                 ],

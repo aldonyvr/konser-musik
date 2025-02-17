@@ -135,6 +135,7 @@ Route::middleware(['auth', 'verified', 'json'])->group(function () {
             Route::get('/purchased-tickets', [DataPemesananController::class, 'getPurchasedTickets'])->name('purchased-tickets')->withoutMiddleware(['auth', 'verified']);
             Route::post('/payment-callback', [DataPemesananController::class, 'handlePaymentCallback'])->name('payment-callback')->withoutMiddleware(['auth', 'verified']);
             Route::post('/handle-expired-payment', [DataPemesananController::class, 'handleExpiredPayment']);
+            Route::get('/report', [DataPemesananController::class, 'getSalesReport']);
         });
         Route::prefix('scan')->group(function () {
             Route::post('/scan-ticket', [ScannerController::class, 'scanTicket']);

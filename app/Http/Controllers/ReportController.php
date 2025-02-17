@@ -17,61 +17,76 @@ class ReportController extends Controller
     {
         try {
             $user = auth()->user();
-            $konser = Konser::with(['tiket'])->where('uuid', $uuid);
-            
-            // Filter for mitra
-            if ($user->role_id === 3) {
-                if ($user->konser_id != $konser->first()->id) {
-                    return response()->json(['error' => 'Unauthorized access'], 403);
-                }
-            }
-            
-            $konser = $konser->first();
+            $konser = Konser::with(['tiket'])->where('uuid', $uuid)->first();
             
             if (!$konser) {
-                return response()->json(['error' => 'Konser not found or unauthorized'], 404);
+                return response()->json(['error' => 'Konser not found'], 404);
             }
 
-            $pembelianQuery = DataPemesanan::whereHas('tiket', function($q) use ($konser) {
+            // Get all purchases for this konser
+            $pembelian = DataPemesanan::whereHas('tiket', function($q) use ($konser) {
                 $q->where('konsers_id', $konser->id);
-            })->where('status_pembayaran', 'Successfully');
+            })
+            ->where('status_pembayaran', 'Successfully')
+            ->get();
 
-            // Calculate stats
+            // Debug raw data
+            \Log::info('Raw pembelian data:', $pembelian->toArray());
+
+            // Check the actual gate_type values in database
+            $types = $pembelian->pluck('gate_type')->toArray();
+            \Log::info('Gate types in database:', $types);
+
+            // Count using direct database values
+            $regularCount = $pembelian->whereIn('gate_type', ['reguler', 'regular'])->count();
+            $vipCount = $pembelian->where('gate_type', 'vip')->count();
+
+            \Log::info('Direct count:', [
+                'regular' => $regularCount,
+                'vip' => $vipCount
+            ]);
+
+            // Calculate revenues
+            $regularRevenue = $pembelian->whereIn('gate_type', ['reguler', 'regular'])
+                ->sum('total_harga');
+            $vipRevenue = $pembelian->where('gate_type', 'vip')
+                ->sum('total_harga');
+
+            \Log::info('Direct revenue:', [
+                'regular' => $regularRevenue,
+                'vip' => $vipRevenue
+            ]);
+
             $report = [
                 'konser_info' => [
                     'title' => $konser->title,
                     'tanggal' => $konser->tanggal,
                     'lokasi' => $konser->lokasi,
+                    'uuid' => $konser->uuid
                 ],
                 'ticket_stats' => [
-                    'total_tickets' => $pembelianQuery->count(),
-                    'total_revenue' => $pembelianQuery->sum('total_harga'),
+                    'total_tickets' => $pembelian->count(),
+                    'total_revenue' => $pembelian->sum('total_harga'),
                     'by_type' => [
-                        'Regular' => $pembelianQuery->where('gate_type', 'Regular')->count(),
-                        'VIP' => $pembelianQuery->where('gate_type', 'VIP')->count(),
-                        'VVIP' => $pembelianQuery->where('gate_type', 'VVIP')->count(),
+                        'Regular' => $regularCount,
+                        'VIP' => $vipCount
                     ],
                     'revenue_by_type' => [
-                        'Regular' => $pembelianQuery->where('gate_type', 'Regular')->sum('total_harga'),
-                        'VIP' => $pembelianQuery->where('gate_type', 'VIP')->sum('total_harga'),
-                        'VVIP' => $pembelianQuery->where('gate_type', 'VVIP')->sum('total_harga'),
+                        'Regular' => $regularRevenue,
+                        'VIP' => $vipRevenue
                     ]
                 ],
-                'sales_by_date' => $this->getSalesByDate($pembelianQuery->get())
+                'sales_by_date' => $this->getSalesByDate($pembelian)
             ];
 
-            Log::info('Report generated successfully', ['konser_id' => $konser->id]);
             return response()->json($report);
 
         } catch (\Exception $e) {
-            Log::error('Error generating report', [
+            \Log::error('Error in getReport:', [
                 'error' => $e->getMessage(),
-                'uuid' => $uuid
+                'trace' => $e->getTraceAsString()
             ]);
-            return response()->json([
-                'error' => 'Failed to generate report',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
@@ -103,14 +118,12 @@ class ReportController extends Controller
                     'total_tickets' => $pembelian->count(),
                     'total_revenue' => $pembelian->sum('total_harga'),
                     'by_type' => [
-                        'Regular' => $pembelian->where('gate_type', 'Regular')->count(),
-                        'VIP' => $pembelian->where('gate_type', 'VIP')->count(),
-                        'VVIP' => $pembelian->where('gate_type', 'VVIP')->count(),
+                        'Regular' => $pembelian->whereIn('gate_type', ['Regular', 'regular', 'REGULAR'])->count(),
+                        'VIP' => $pembelian->whereIn('gate_type', ['VIP', 'vip', 'Vip'])->count(),
                     ],
                     'revenue_by_type' => [
-                        'Regular' => $pembelian->where('gate_type', 'Regular')->sum('total_harga'),
-                        'VIP' => $pembelian->where('gate_type', 'VIP')->sum('total_harga'),
-                        'VVIP' => $pembelian->where('gate_type', 'VVIP')->sum('total_harga'),
+                        'Regular' => $pembelian->whereIn('gate_type', ['Regular', 'regular', 'REGULAR'])->sum('total_harga'),
+                        'VIP' => $pembelian->whereIn('gate_type', ['VIP', 'vip', 'Vip'])->sum('total_harga'),
                     ]
                 ]
             ];
@@ -135,14 +148,36 @@ class ReportController extends Controller
 
             switch ($type) {
                 case 'excel':
-                    return Excel::download(
-                        new KonserReportExport($report), 
-                        'konser-report-' . $uuid . '.xlsx'
-                    );
+                    $filename = 'laporan-konser-' . date('Y-m-d-His') . '.xlsx';
+                    $filepath = storage_path('app/public/reports/' . $filename);
+                    
+                    // Create directory if it doesn't exist
+                    if (!file_exists(storage_path('app/public/reports'))) {
+                        mkdir(storage_path('app/public/reports'), 0755, true);
+                    }
+                    
+                    // Generate Excel file
+                    Excel::store(new KonserReportExport($report), 'reports/' . $filename, 'public');
+                    
+                    // Return file URL
+                    return response()->json([
+                        'success' => true,
+                        'file_url' => url('storage/reports/' . $filename),
+                        'filename' => $filename
+                    ]);
                 
                 case 'pdf':
-                    return PDF::loadView('reports.konser', compact('report'))
-                        ->download('konser-report-' . $uuid . '.pdf');
+                    $pdf = PDF::loadView('reports.konser', compact('report'));
+                    $filename = 'laporan-konser-' . date('Y-m-d-His') . '.pdf';
+                    
+                    // Save PDF to storage
+                    $pdf->save(storage_path('app/public/reports/' . $filename));
+                    
+                    return response()->json([
+                        'success' => true,
+                        'file_url' => url('storage/reports/' . $filename),
+                        'filename' => $filename
+                    ]);
                 
                 default:
                     return response()->json(['error' => 'Invalid report type'], 400);
@@ -152,7 +187,8 @@ class ReportController extends Controller
             Log::error('Error downloading report', [
                 'error' => $e->getMessage(),
                 'uuid' => $uuid,
-                'type' => $type
+                'type' => $type,
+                'trace' => $e->getTraceAsString()
             ]);
             return response()->json([
                 'error' => 'Failed to download report',
@@ -165,12 +201,37 @@ class ReportController extends Controller
     {
         return $pembelian
             ->groupBy(function($item) {
-                return Carbon::parse($item->tanggal_pemesan)->format('Y-m-d');
+                return Carbon::parse($item->created_at)->format('Y-m-d');
             })
-            ->map(function($group) {
+            ->map(function($groupedItems) {
+                // Count directly from the grouped items
+                $regularCount = $groupedItems->whereIn('gate_type', ['reguler', 'regular'])->count();
+                $vipCount = $groupedItems->where('gate_type', 'vip')->count();
+                
+                // Calculate revenue directly
+                $regularRevenue = $groupedItems->whereIn('gate_type', ['reguler', 'regular'])->sum('total_harga');
+                $vipRevenue = $groupedItems->where('gate_type', 'vip')->sum('total_harga');
+
+                \Log::info('Group data:', [
+                    'date' => $groupedItems->first()->created_at,
+                    'items' => $groupedItems->pluck('gate_type')->toArray(),
+                    'regular_count' => $regularCount,
+                    'vip_count' => $vipCount,
+                    'regular_revenue' => $regularRevenue,
+                    'vip_revenue' => $vipRevenue
+                ]);
+
                 return [
-                    'count' => $group->count(),
-                    'revenue' => $group->sum('total_harga')
+                    'count' => $groupedItems->count(),
+                    'revenue' => $groupedItems->sum('total_harga'),
+                    'by_type' => [
+                        'Regular' => $regularCount,
+                        'VIP' => $vipCount
+                    ],
+                    'revenue_by_type' => [
+                        'Regular' => $regularRevenue,
+                        'VIP' => $vipRevenue
+                    ]
                 ];
             });
     }

@@ -97,8 +97,18 @@ const fetchCities = async () => {
   }
 };
 
-const goToEventDetail = (id: number) => {
-  router.push(`/detail-konser/${id}`);
+const goToEventDetail = (eventData) => {
+  // Check if eventData is a direct UUID or an object
+  const uuid = typeof eventData === 'string' ? 
+    eventData : 
+    (eventData?.konser?.uuid || eventData?.uuid);
+
+  if (!uuid) {
+    console.error('UUID not found in event data:', eventData);
+    return;
+  }
+
+  router.push(`/detail-konser/${uuid}`);
 };
 
 // Helper function to check if ticket data is empty/zero
@@ -183,9 +193,15 @@ const initializeSplide = () => {
     width: '100vw',
     fixedWidth: '100vw', 
     padding: '0',
+    start: 0, // Start from first slide
   });
 
   splide.mount();
+
+  // Trigger one automatic move after mounting
+  setTimeout(() => {
+    splide.go('+1'); // Move to next slide once
+  }, 500); // Wait 500ms after mount
 };
 
 watch(banners, (newBanners) => {
@@ -547,7 +563,7 @@ const resetFilters = () => {
           <p>Tidak ada konser yang tersedia saat ini.</p>
         </div>
         <div v-for="event in displayedKonser" :key="event.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
-          <div class="card concert-card" @click="goToEventDetail(event.uuid)">
+          <div class="card concert-card" @click="goToEventDetail(event.konser.uuid)">
             <div class="card-img-wrapper">
               <img :src="`${event.konser.image}`" class="card-img-top" alt="Event Image">
             </div>
@@ -565,7 +581,7 @@ const resetFilters = () => {
               </p>
               <div class="d-flex justify-content-between align-items-center">
                 <p class="card-text mb-0"> {{ event.konser.harga }}</p>
-                <a @click.stop="goToEventDetail(event.tiket.uuid)" class="btn btn-primary btn-sm">
+                <a @click.stop="goToEventDetail(event.konser.uuid)" class="btn btn-primary btn-sm">
                   Tickets <i class="fa-solid fa-ticket ms-1"></i>
                 </a>
               </div>

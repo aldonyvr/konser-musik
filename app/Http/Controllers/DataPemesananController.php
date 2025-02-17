@@ -46,6 +46,15 @@ class DataPemesananController extends Controller
 
             // Create orders
             foreach ($request->tickets as $ticket) {
+                // Normalize the gate type to ensure consistent casing
+                $gateType = strtolower($ticket['type']) === 'vip' ? 'VIP' : 'Regular';
+                
+                // Log the ticket type being saved
+                \Log::info('Creating ticket order:', [
+                    'gate_type' => $gateType,
+                    'ticket_type' => $ticket['type']
+                ]);
+
                 DataPemesanan::create([
                     'tiket_id' => $tiket->id,
                     'user_id' => Auth::id(),
@@ -58,6 +67,7 @@ class DataPemesananController extends Controller
                     'jumlah_tiket' => 1,
                     'status_pembayaran' => 'Pending',
                     'total_harga' => $ticket['total_harga'],
+                    'gate_type' => strtolower($ticket['type']), // Ensure consistent lowercase
                     'gate' => $ticket['gate'] ?? null
                 ]);
             }
@@ -165,11 +175,20 @@ class DataPemesananController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($ticket) {
+                    // Normalize gate type when retrieving
+                    $gateType = strtolower($ticket->gate_type) === 'vip' ? 'VIP' : 'Regular';
+                    
+                    \Log::info('Retrieved ticket:', [
+                        'id' => $ticket->id,
+                        'original_gate_type' => $ticket->gate_type,
+                        'normalized_gate_type' => $gateType
+                    ]);
+
                     return [
                         'id' => $ticket->id,
                         'uuid' => $ticket->uuid,
                         'nama_pemesan' => $ticket->nama_pemesan,
-                        'gate_type' => $ticket->gate,
+                        'gate_type' => $gateType,
                         'total_harga' => $ticket->total_harga,
                         'status_pembayaran' => $ticket->status_pembayaran,
                         'is_used' => $ticket->is_used ?? false,

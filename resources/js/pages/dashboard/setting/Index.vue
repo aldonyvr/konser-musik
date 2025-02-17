@@ -46,7 +46,7 @@
                     <!--end::Input group-->
 
                     <!--begin::Input group-->
-                    <div class="fv-row mb-8">
+                    <!-- <div class="fv-row mb-8">
                         <label class="form-label fw-bold fs-6 required">Alamat</label>
                         <Field class="form-control form-control-lg form-control-solid" type="text" name="alamat"
                             autocomplete="off" v-model="formData.alamat" />
@@ -55,11 +55,11 @@
                                 <ErrorMessage name="alamat" />
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                     <!--end::Input group-->
 
                     <!--begin::Input group-->
-                    <div class="fv-row mb-8">
+                    <!-- <div class="fv-row mb-8">
                         <label class="form-label fw-bold fs-6 required">Telepon</label>
                         <Field class="form-control form-control-lg form-control-solid" type="text" name="telepon"
                             autocomplete="off" v-model="formData.telepon" />
@@ -68,11 +68,11 @@
                                 <ErrorMessage name="telepon" />
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                     <!--end::Input group-->
 
                     <!--begin::Input group-->
-                    <div class="fv-row mb-8">
+                    <!-- <div class="fv-row mb-8">
                         <label class="form-label fw-bold fs-6 required">Email</label>
                         <Field class="form-control form-control-lg form-control-solid" type="text" name="email"
                             autocomplete="off" v-model="formData.email" />
@@ -81,7 +81,7 @@
                                 <ErrorMessage name="email" />
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                     <!--end::Input group-->
                 </div>
 

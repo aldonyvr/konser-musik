@@ -12,6 +12,7 @@ const scanResult = ref({
 });
 const scanStatus = ref('');
 const isScanning = ref(true);
+const isActive = ref(true);
 
 onMounted(() => {
     initScanner();
@@ -25,6 +26,8 @@ onBeforeUnmount(() => {
 
 const initScanner = async () => {
     try {
+        if (!isActive.value) return;
+        
         scanner.value = new Html5Qrcode("qr-reader");
         const cameras = await Html5Qrcode.getCameras();
         
@@ -43,6 +46,22 @@ const initScanner = async () => {
     } catch (err) {
         console.error('Error starting scanner:', err);
     }
+};
+
+const stopScanner = async () => {
+    try {
+        if (scanner.value) {
+            await scanner.value.stop();
+            isActive.value = false;
+        }
+    } catch (err) {
+        console.error('Error stopping scanner:', err);
+    }
+};
+
+const restartScanner = async () => {
+    isActive.value = true;
+    await initScanner();
 };
 
 const handleScanSuccess = async (decodedText) => {
@@ -98,8 +117,20 @@ const playSound = (type) => {
 
 <template>
     <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="card-title">QR Code Scanner (Camera Only)</h3>
+            <div>
+                <button v-if="isActive" 
+                        @click="stopScanner" 
+                        class="btn btn-danger btn-sm">
+                    <i class="fas fa-stop me-1"></i> Stop Scanner
+                </button>
+                <button v-else 
+                        @click="restartScanner" 
+                        class="btn btn-success btn-sm">
+                    <i class="fas fa-play me-1"></i> Start Scanner
+                </button>
+            </div>
         </div>
         <div class="card-body">
             <div class="row">
@@ -242,5 +273,11 @@ const playSound = (type) => {
 /* Hide file selection button */
 #html5-qrcode-button-file-selection {
     display: none !important;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.2rem;
 }
 </style>

@@ -45,7 +45,7 @@ class BannerController extends Controller
     {
 
         $req = $request->validate([
-            'image' => 'required|file|mimes:jpg,png,jpeg|max:2048',
+            'image' => 'required|file|mimes:jpg,png,jpeg',
         ]);
 
         if ($request->hasFile('image')) {
@@ -88,7 +88,7 @@ class BannerController extends Controller
         try {
             $banner = Banner::findByUuid($uuid);
             $req = $request->validate([
-                'image' => 'nullable|file|mimes:jpg,png,jpeg|max:2048',
+                'image' => 'nullable|file|mimes:jpg,png,jpeg',
             ]);
 
             if ($request->hasFile('image')) {

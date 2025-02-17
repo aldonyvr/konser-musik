@@ -91,9 +91,6 @@ const fetchDashboardData = async () => {
     dashboardData.value.monthlyStats = monthlyStats;
 
     updateCharts();
-  } catch (error) {
-    console.error('Error fetching dashboard data:', error);
-    toast.error('Gagal memuat data dashboard');
   } finally {
     isLoading.value = false;
   }
